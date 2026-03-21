@@ -774,7 +774,7 @@ public static class SceneBuilder
         body.name = "Body";
         body.transform.SetParent(player.transform);
         body.transform.localPosition = new Vector3(0f, 1f, 0f);
-        body.GetComponent<Renderer>().material.color = COL_PLAYER;
+        body.GetComponent<Renderer>().sharedMaterial = MakeMat(COL_PLAYER);
         Object.DestroyImmediate(body.GetComponent<Collider>());
 
         // 머리
@@ -783,7 +783,7 @@ public static class SceneBuilder
         head.transform.SetParent(player.transform);
         head.transform.localPosition = new Vector3(0f, 2.2f, 0f);
         head.transform.localScale = new Vector3(0.6f, 0.6f, 0.6f);
-        head.GetComponent<Renderer>().material.color = new Color(1.0f, 0.85f, 0.65f);
+        head.GetComponent<Renderer>().sharedMaterial = MakeMat(new Color(1.0f, 0.85f, 0.65f));
         Object.DestroyImmediate(head.GetComponent<Collider>());
 
         // 물리 컴포넌트
@@ -823,7 +823,7 @@ public static class SceneBuilder
         toolVis.transform.localPosition = Vector3.zero;
         toolVis.transform.localScale = new Vector3(0.1f, 0.7f, 0.1f);
         toolVis.transform.localRotation = Quaternion.Euler(30f, 0f, 0f);
-        toolVis.GetComponent<Renderer>().material.color = new Color(0.4f, 0.4f, 0.4f);
+        toolVis.GetComponent<Renderer>().sharedMaterial = MakeMat(new Color(0.4f, 0.4f, 0.4f));
         Object.DestroyImmediate(toolVis.GetComponent<Collider>());
 
         // 컴포넌트 부착
@@ -850,13 +850,20 @@ public static class SceneBuilder
     // ════════════════════════════════════════════════════════════
     // 헬퍼
     // ════════════════════════════════════════════════════════════
+    static Material MakeMat(Color color)
+    {
+        var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        mat.color = color;
+        return mat;
+    }
+
     static GameObject MakeCube(string name, Vector3 pos, Vector3 scale, Color color)
     {
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = name;
         go.transform.position = pos;
         go.transform.localScale = scale;
-        go.GetComponent<Renderer>().material.color = color;
+        go.GetComponent<Renderer>().sharedMaterial = MakeMat(color);
         return go;
     }
 
@@ -869,7 +876,7 @@ public static class SceneBuilder
         go.transform.localPosition = localPos;
         go.transform.localScale = scale;
         go.transform.localRotation = Quaternion.identity;
-        go.GetComponent<Renderer>().material.color = color;
+        go.GetComponent<Renderer>().sharedMaterial = MakeMat(color);
         return go;
     }
 
@@ -908,7 +915,7 @@ public static class SceneBuilder
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = "Rock";
         go.transform.localScale = new Vector3(0.85f, 0.55f, 0.85f);
-        go.GetComponent<Renderer>().material.color = COL_ROCK;
+        go.GetComponent<Renderer>().sharedMaterial = MakeMat(COL_ROCK);
         go.AddComponent<RockNode>();
 
         var prefab = PrefabUtility.SaveAsPrefabAsset(go, path);
