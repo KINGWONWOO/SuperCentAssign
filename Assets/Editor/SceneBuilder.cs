@@ -54,8 +54,8 @@ public static class SceneBuilder
     static readonly float   PRISON_100_W      = 16f;
     static readonly float   PRISON_DEPTH      = 10f;
 
-    // 플레이어
-    static readonly Vector3 PLAYER_START      = new Vector3(-1f,  1f, 7f);
+    // 플레이어 (y=0: CC center=(0,1,0) height=2 → 발바닥이 y=0에 닿음)
+    static readonly Vector3 PLAYER_START      = new Vector3(-1f,  0f, 7f);
 
     // ── 색상 팔레트 ───────────────────────────────────────────────
     static Color COL_ROCK       = new Color(0.62f, 0.58f, 0.54f);
@@ -155,7 +155,13 @@ public static class SceneBuilder
     // ════════════════════════════════════════════════════════════
     static void BuildFloorAndRoad()
     {
-        // 전체 바닥
+        // 투명 지면 Collider (플레이어가 서는 실제 충돌면, y=0)
+        var ground = new GameObject("Ground");
+        var gc = ground.AddComponent<BoxCollider>();
+        gc.size = new Vector3(120f, 0.1f, 120f);
+        gc.center = new Vector3(0f, -0.05f, 0f); // 상단 표면 = y=0
+
+        // 전체 바닥 (시각적 장식, Collider 비활성)
         var floor = MakeCube("Floor",
             new Vector3(4f, -0.55f, 5f),
             new Vector3(38f, 0.1f, 36f),
@@ -260,7 +266,8 @@ public static class SceneBuilder
         // ── MiningGrid 컴포넌트 (group 자식) ─────────────────────────
         var gridObj = new GameObject("MiningGrid");
         gridObj.transform.SetParent(group.transform);
-        gridObj.transform.localPosition = Vector3.zero;
+        // y=0.275 = 돌 프리팹 높이(0.55)의 절반 → 돌 바닥이 지면(y=0)에 닿음
+        gridObj.transform.localPosition = new Vector3(0f, 0.275f, 0f);
 
         var rockPrefab = GetOrCreateRockPrefab();
         var orePrefab  = AssetDatabase.LoadAssetAtPath<GameObject>(

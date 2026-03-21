@@ -20,7 +20,8 @@ public class MiningGrid : MonoBehaviour
 
     public GameObject OrePrefab => orePrefab;
 
-    void Awake()
+    // Start() 사용: Awake() 시점에는 GameManager 싱글톤이 미초기화일 수 있음
+    void Start()
     {
         GameSettings s = GameManager.Instance.Settings;
         columns = s.gridColumns;
