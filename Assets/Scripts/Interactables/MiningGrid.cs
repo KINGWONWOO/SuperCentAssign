@@ -8,6 +8,12 @@ public class MiningGrid : MonoBehaviour
     [SerializeField] private GameObject rockPrefab;
     [SerializeField] private GameObject orePrefab;
 
+    [Header("Editor Preview (씬 뷰 미리보기)")]
+    [SerializeField] private int previewColumns = 7;
+    [SerializeField] private int previewRows    = 20;
+    [SerializeField] private float previewSpacingX = 1.2f;
+    [SerializeField] private float previewSpacingZ  = 1.2f;
+
     private int columns;
     private int rows;
     private float spacingX;
@@ -118,4 +124,37 @@ public class MiningGrid : MonoBehaviour
         row = Mathf.Clamp(row, 0, rows - 1);
         return new Vector2Int(col, row);
     }
+
+#if UNITY_EDITOR
+    // 선택 시 돌 생성 위치를 씬 뷰에 미리 표시
+    void OnDrawGizmosSelected()
+    {
+        int pCols = Application.isPlaying ? columns : previewColumns;
+        int pRows = Application.isPlaying ? rows    : previewRows;
+        float pSX = Application.isPlaying ? spacingX : previewSpacingX;
+        float pSZ = Application.isPlaying ? spacingZ  : previewSpacingZ;
+
+        Vector3 origin = transform.position
+            - new Vector3((pCols - 1) * pSX * 0.5f, 0f,
+                          (pRows - 1) * pSZ * 0.5f);
+
+        // 개별 돌 위치 (주황 와이어 박스)
+        Gizmos.color = new Color(1f, 0.6f, 0.1f, 0.6f);
+        for (int r = 0; r < pRows; r++)
+            for (int c = 0; c < pCols; c++)
+                Gizmos.DrawWireCube(origin + new Vector3(c * pSX, 0f, r * pSZ),
+                                    new Vector3(0.5f, 0.55f, 0.5f));
+
+        // 전체 영역 (빨간 외곽선)
+        float totalW = (pCols - 1) * pSX + pSX;
+        float totalD = (pRows - 1) * pSZ + pSZ;
+        Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.5f);
+        Gizmos.DrawWireCube(transform.position, new Vector3(totalW, 0.6f, totalD));
+
+        // 레이블
+        UnityEditor.Handles.color = Color.white;
+        UnityEditor.Handles.Label(transform.position + Vector3.up * 2f,
+            $"MiningGrid {pCols}×{pRows}  간격({pSX},{pSZ})");
+    }
+#endif
 }

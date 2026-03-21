@@ -94,4 +94,47 @@ public class CellManager : MonoBehaviour
         if (cellCounterText != null)
             cellCounterText.text = $"{prisonersInCell.Count}/{capacity}";
     }
+
+#if UNITY_EDITOR
+    void OnDrawGizmos()
+    {
+        // 감방 슬롯 위치 미리보기 (5열 × 4행)
+        if (cellRoot == null) return;
+
+        const int cols = 5, rows = 4;
+        const float sX = 1.5f, sZ = 1.5f;
+
+        for (int i = 0; i < cols * rows; i++)
+        {
+            int col = i % cols;
+            int row = i / cols;
+            Vector3 offset = new Vector3(col * sX, 0f, -row * sZ);
+            Vector3 pos = cellRoot.position + cellRoot.rotation * offset;
+
+            // 슬롯 색상: 앞줄은 밝게, 뒷줄은 어둡게
+            float t = (float)row / (rows - 1);
+            Gizmos.color = Color.Lerp(new Color(0.3f, 1f, 0.4f, 0.7f),
+                                      new Color(0.1f, 0.5f, 0.2f, 0.5f), t);
+            Gizmos.DrawWireCube(pos, new Vector3(0.9f, 1.8f, 0.9f));
+        }
+
+        // cellRoot 기준점 (초록 구)
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(cellRoot.position, 0.3f);
+        UnityEditor.Handles.Label(cellRoot.position + Vector3.up * 0.8f,
+            $"CellRoot  {cols}×{rows}");
+
+        // 감옥 밖 대기 위치 (보라 구)
+        if (outsideWaitSpots != null)
+        {
+            Gizmos.color = new Color(0.8f, 0.2f, 1f, 0.9f);
+            foreach (var spot in outsideWaitSpots)
+                if (spot != null)
+                {
+                    Gizmos.DrawSphere(spot.position, 0.3f);
+                    UnityEditor.Handles.Label(spot.position + Vector3.up * 0.7f, "NoCell Wait");
+                }
+        }
+    }
+#endif
 }

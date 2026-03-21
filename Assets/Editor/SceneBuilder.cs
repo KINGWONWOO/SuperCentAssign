@@ -524,14 +524,14 @@ public static class SceneBuilder
         counter.alignment = TMPro.TextAlignmentOptions.Center;
         counter.color = Color.white;
 
-        // 셀 루트 (CellManager가 감방 위치를 생성하는 기준)
-        var cellRoot = new GameObject("CellRoot");
-        cellRoot.transform.SetParent(prisonRoot.transform);
-        cellRoot.transform.position = PRISON_20_CENTER + new Vector3(0f, 0f, -2f);
+        // 셀 루트 (CellManager가 감방 위치를 생성하는 기준) — 초록 구체로 씬 뷰에 표시
+        var cellRoot = MakeMarker("CellRoot", prisonRoot,
+                                  PRISON_20_CENTER + new Vector3(0f, 0f, -2f),
+                                  new Color(0.2f, 1f, 0.3f));
 
         var cm = prisonRoot.AddComponent<CellManager>();
         var so = new SerializedObject(cm);
-        so.FindProperty("cellRoot").objectReferenceValue        = cellRoot.transform;
+        so.FindProperty("cellRoot").objectReferenceValue        = cellRoot.transform;  // MakeMarker GameObject
         so.FindProperty("cellCounterText").objectReferenceValue = counter;
         so.ApplyModifiedPropertiesWithoutUndo();
 
@@ -608,10 +608,13 @@ public static class SceneBuilder
         MakeLabel(spawnerRoot.transform, "수감자\n스포너",
             new Vector3(0f, 1.5f, 0f), COL_PRISONER, 3f);
 
-        var spawnPt = MakeMarker("SpawnPoint",  spawnerRoot, PRISONER_SPAWN);
-        var waitPt  = MakeMarker("WaitPosition", null, PRISONER_WAIT);
+        var spawnPt = MakeMarker("SpawnPoint",   spawnerRoot, PRISONER_SPAWN,
+                                  new Color(1f, 0.2f, 0.2f));   // 빨강 = 스폰
+        var waitPt  = MakeMarker("WaitPosition", null, PRISONER_WAIT,
+                                  new Color(1f, 0.9f, 0f));     // 노랑 = 대기
         var deskPt  = MakeMarker("DeskPosition", null,
-                          DESK_POS + new Vector3(0f, 0f, -1.5f));
+                          DESK_POS + new Vector3(0f, 0f, -1.5f),
+                                  new Color(0.2f, 0.8f, 1f));   // 하늘 = 책상 앞
 
         var prisonerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
             "Assets/Prefabs/PrisonerPrefab.prefab");
@@ -890,11 +893,27 @@ public static class SceneBuilder
         tmp.alignment = TMPro.TextAlignmentOptions.Center;
     }
 
-    static GameObject MakeMarker(string name, GameObject parent, Vector3 worldPos)
+    // 씬 뷰에서 드래그로 위치를 조정할 수 있는 컬러 마커 구체
+    static GameObject MakeMarker(string name, GameObject parent, Vector3 worldPos,
+                                 Color? color = null)
     {
         var obj = new GameObject(name);
         if (parent != null) obj.transform.SetParent(parent.transform);
         obj.transform.position = worldPos;
+
+        // 작은 구체 비주얼 (에디터 전용 - 런타임에는 비활성)
+        var vis = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        vis.name = "MarkerVis";
+        vis.transform.SetParent(obj.transform);
+        vis.transform.localPosition = Vector3.zero;
+        vis.transform.localScale = Vector3.one * 0.4f;
+        vis.GetComponent<Renderer>().sharedMaterial =
+            MakeMat(color ?? new Color(1f, 0.8f, 0f));
+        Object.DestroyImmediate(vis.GetComponent<Collider>());
+
+        // 런타임에는 렌더러만 끔 (Transform은 유지해야 경로로 사용됨)
+        vis.tag = "EditorOnly";
+
         return obj;
     }
 

@@ -83,4 +83,45 @@ public class PrisonerSpawner : MonoBehaviour
         }
         return marker.transform;
     }
+
+#if UNITY_EDITOR
+    void OnDrawGizmos()
+    {
+        // 스폰 포인트 (빨간 구)
+        if (spawnPoint != null)
+        {
+            Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.9f);
+            Gizmos.DrawSphere(spawnPoint.position, 0.35f);
+            UnityEditor.Handles.Label(spawnPoint.position + Vector3.up * 0.8f, "Spawn");
+        }
+        // 대기 위치 (노란 구)
+        if (waitPosition != null)
+        {
+            Gizmos.color = new Color(1f, 0.9f, 0f, 0.9f);
+            Gizmos.DrawSphere(waitPosition.position, 0.35f);
+            UnityEditor.Handles.Label(waitPosition.position + Vector3.up * 0.8f, "Wait");
+            // 2번째 대기 위치 미리보기
+            Gizmos.color = new Color(1f, 0.9f, 0f, 0.4f);
+            Gizmos.DrawSphere(waitPosition.position - waitPosition.forward * 1.5f, 0.25f);
+        }
+        // 책상 앞 위치 (하늘색 구)
+        if (deskPosition != null)
+        {
+            Gizmos.color = new Color(0.2f, 0.8f, 1f, 0.9f);
+            Gizmos.DrawSphere(deskPosition.position, 0.35f);
+            UnityEditor.Handles.Label(deskPosition.position + Vector3.up * 0.8f, "Desk");
+        }
+        // 이동 경로 선
+        if (spawnPoint != null && waitPosition != null)
+        {
+            Gizmos.color = new Color(1f, 1f, 0f, 0.4f);
+            Gizmos.DrawLine(spawnPoint.position, waitPosition.position);
+        }
+        if (waitPosition != null && deskPosition != null)
+        {
+            Gizmos.color = new Color(0.2f, 0.8f, 1f, 0.4f);
+            Gizmos.DrawLine(waitPosition.position, deskPosition.position);
+        }
+    }
+#endif
 }
