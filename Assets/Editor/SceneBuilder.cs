@@ -145,10 +145,17 @@ public static class SceneBuilder
         var c = cam.AddComponent<Camera>();
         c.fieldOfView = 60f;
         c.farClipPlane = 300f;
-        // 초기 위치는 CameraFollow가 런타임에 결정 — 편집 시 미리보기용
-        cam.transform.position = new Vector3(0f, 10f, -7f);
-        cam.transform.rotation = Quaternion.Euler(50f, 0f, 0f);
-        cam.AddComponent<CameraFollow>(); // 플레이어 target은 아래에서 연결
+
+        // view.png 기준 아이소메트릭 45° 뷰
+        // Y=45°: 채석장(+X방향)이 화면 상단에, Y축 50° 틸트
+        cam.transform.rotation = Quaternion.Euler(50f, 45f, 0f);
+        cam.transform.position = PLAYER_START + new Vector3(-7f, 11f, -7f);
+
+        var follow = cam.AddComponent<CameraFollow>();
+        var soFollow = new SerializedObject(follow);
+        soFollow.FindProperty("offset").vector3Value = new Vector3(-7f, 11f, -7f);
+        soFollow.ApplyModifiedPropertiesWithoutUndo();
+
         return cam;
     }
 
@@ -287,7 +294,8 @@ public static class SceneBuilder
 
         // ── MiningGrid 컴포넌트 (group 자식) ─────────────────────────
         var gridObj = new GameObject("MiningGrid");
-        gridObj.transform.SetParent(group.transform);
+        // worldPositionStays=false → localRotation이 identity 유지 → 부모 90° 회전 상속
+        gridObj.transform.SetParent(group.transform, false);
         // y=0.275 = 돌 프리팹 높이(0.55)의 절반 → 돌 바닥이 지면(y=0)에 닿음
         gridObj.transform.localPosition = new Vector3(0f, 0.275f, 0f);
 
