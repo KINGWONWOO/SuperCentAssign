@@ -1,0 +1,78 @@
+# SuperCent Assignment - Claude Code 대화 기록
+============================================================
+
+[사용자]
+https://github.com/KINGWONWOO/SuperCentAssign 해당 프로젝트 최초 깃 init 생성해주고 내가 보내준 레포 주소에 첫 커밋 및 푸쉬해줘.
+
+[Claude]
+`.gitignore`를 만들고 git init 후 첫 커밋 및 푸쉬를 진행할게요.
+
+[Claude]
+스테이징이 완료됐습니다. 첫 커밋을 생성하고 푸쉬할게요.
+
+[Claude]
+완료됐습니다!
+
+- **git init** 완료
+- **.gitignore** 생성 (Unity URP 프로젝트에 맞게 Library, Temp, Logs 등 제외)
+- **첫 커밋** 생성 (64개 파일, `f4316d1`)
+- **`main` 브랜치로 푸쉬** 완료 → https://github.com/KINGWONWOO/SuperCentAssign
+
+[사용자]
+해당 프로젝트 파일 전체도 커밋해주고 readme도 작성해줘. 앞으로 생기는 모든 변화를 요청할 때 마다 커밋 - 푸쉬해주고 이에 맞춰 리드미도 계속 업데이트해줘
+
+[Claude]
+모든 Assets는 이미 커밋되어 있고, 남은 파일들은 `.plastic/`(Plastic SCM 내부 파일)과 `.vsconfig`, `ignore.conf`입니다. `.plastic/`과 `ignore.conf`는 gitignore에 추가하고, `.vsconfig`는 포함시킬게요.
+
+[Claude]
+이제 README.md를 작성할게요.
+
+[Claude]
+이제 feedback 메모리에 이 규칙을 저장해둘게요.
+
+[Claude]
+완료됐습니다.
+
+**커밋된 내용:**
+- `README.md` — 프로젝트 개요, 구조, 시작 방법, 변경 이력 포함
+- `.vsconfig` — Visual Studio Unity 워크로드 설정
+- `.gitignore` 업데이트 — `.plastic/`, `ignore.conf` 제외 추가
+
+**앞으로 매 요청마다:**
+1. 변경사항 커밋 + 푸쉬
+2. README.md 변경 이력 업데이트 + 커밋 + 푸쉬
+
+자동으로 진행할게요.
+
+[사용자]
+main에 있는 걸 201924407에 통합해줘
+
+[Claude]
+`201924407` 브랜치가 없으니 `main`에서 새로 만들어서 푸쉬할게요.
+
+[Claude]
+리모트에 이미 `201924407` 브랜치가 있네요. 확인해볼게요.
+
+[Claude]
+두 브랜치가 서로 다른 히스토리를 가지고 있어요. `201924407`에 `main`을 머지할게요.
+
+[Claude]
+README.md 충돌이 있어요. `main`의 내용으로 덮어쓸게요.
+
+[Claude]
+완료됐습니다.
+
+- `origin/201924407`을 로컬에 받아와서 `origin/main`을 머지
+- README 충돌은 `main` 내용으로 해결
+- `201924407` 브랜치에 푸쉬 완료
+
+현재 로컬은 `201924407` 브랜치에 있습니다. `main`으로 돌아가고 싶으시면 말씀해 주세요.
+
+[사용자]
+너랑 대화했던 프롬프트들 export 할 수 있나? 제출해야해서
+
+[Claude]
+대화 로그 파일을 찾았습니다. 읽기 좋은 텍스트 파일로 변환해 드릴게요.
+
+[Claude]
+파일이 거의 비어있네요. JSONL 구조를 먼저 확인할게요.
