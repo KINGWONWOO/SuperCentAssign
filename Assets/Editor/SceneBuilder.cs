@@ -102,6 +102,7 @@ public static class SceneBuilder
         BuildMoneyPickupZone(deskResult.moneySpawner);
 
         BuildUpgradeZones(prisonResult.cellManager, grid, prisonResult.prison100);
+        BuildOuterWalls();
         BuildManagers(gs);
         BuildMoneyHUD();
         var playerObj = BuildPlayer();
@@ -876,6 +877,72 @@ public static class SceneBuilder
 
         player.AddComponent<PlayerInteraction>();
         return player;
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // 외벽 (전체 맵을 감싸는 경계벽)
+    // ════════════════════════════════════════════════════════════
+    // 씬 실측 범위: X(-14~33) Z(-15~27) + 패딩 3유닛
+    static readonly float WALL_X_MIN = -17f;
+    static readonly float WALL_X_MAX =  36f;
+    static readonly float WALL_Z_MIN = -18f;
+    static readonly float WALL_Z_MAX =  30f;
+    static readonly float WALL_H     =  3.5f;
+    static readonly float WALL_T     =  0.6f;
+
+    [MenuItem("Game/Add Outer Walls")]
+    public static void BuildOuterWalls()
+    {
+        // 기존 외벽 제거
+        var existing = GameObject.Find("OuterWalls");
+        if (existing != null) Object.DestroyImmediate(existing);
+
+        var root = new GameObject("OuterWalls");
+        Color wallCol = new Color(0.55f, 0.52f, 0.48f); // 석재 회색
+
+        float cx = (WALL_X_MIN + WALL_X_MAX) * 0.5f;
+        float cz = (WALL_Z_MIN + WALL_Z_MAX) * 0.5f;
+        float spanX = WALL_X_MAX - WALL_X_MIN;
+        float spanZ = WALL_Z_MAX - WALL_Z_MIN;
+        float halfH = WALL_H * 0.5f;
+
+        // 남쪽 벽 (-Z)
+        MakeChildCube(root, "Wall_South",
+            new Vector3(cx, halfH, WALL_Z_MIN),
+            new Vector3(spanX + WALL_T, WALL_H, WALL_T), wallCol);
+
+        // 북쪽 벽 (+Z)
+        MakeChildCube(root, "Wall_North",
+            new Vector3(cx, halfH, WALL_Z_MAX),
+            new Vector3(spanX + WALL_T, WALL_H, WALL_T), wallCol);
+
+        // 서쪽 벽 (-X)
+        MakeChildCube(root, "Wall_West",
+            new Vector3(WALL_X_MIN, halfH, cz),
+            new Vector3(WALL_T, WALL_H, spanZ - WALL_T), wallCol);
+
+        // 동쪽 벽 (+X)
+        MakeChildCube(root, "Wall_East",
+            new Vector3(WALL_X_MAX, halfH, cz),
+            new Vector3(WALL_T, WALL_H, spanZ - WALL_T), wallCol);
+
+        // 상단 테두리 장식선 (벽 위에 얇은 띠)
+        Color capCol = new Color(0.42f, 0.38f, 0.34f);
+        float capH = 0.18f;
+        float capY = WALL_H + capH * 0.5f;
+
+        MakeChildCube(root, "Cap_South", new Vector3(cx, capY, WALL_Z_MIN),
+            new Vector3(spanX + WALL_T + 0.12f, capH, WALL_T + 0.12f), capCol);
+        MakeChildCube(root, "Cap_North", new Vector3(cx, capY, WALL_Z_MAX),
+            new Vector3(spanX + WALL_T + 0.12f, capH, WALL_T + 0.12f), capCol);
+        MakeChildCube(root, "Cap_West",  new Vector3(WALL_X_MIN, capY, cz),
+            new Vector3(WALL_T + 0.12f, capH, spanZ - WALL_T + 0.12f), capCol);
+        MakeChildCube(root, "Cap_East",  new Vector3(WALL_X_MAX, capY, cz),
+            new Vector3(WALL_T + 0.12f, capH, spanZ - WALL_T + 0.12f), capCol);
+
+        EditorSceneManager.MarkSceneDirty(
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+        Debug.Log("[SceneBuilder] 외벽 생성 완료");
     }
 
     // ════════════════════════════════════════════════════════════
