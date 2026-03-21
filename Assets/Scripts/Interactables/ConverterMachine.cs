@@ -1,12 +1,10 @@
 using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 
 // 광석 1개 → 수갑 1개, processTime 처리 시간.
 // 완성된 수갑은 handcuffDropZone(HandcuffPickupZone)에 직접 쌓임.
 public class ConverterMachine : MonoBehaviour
 {
-    [SerializeField] private Transform outputPoint;
     [SerializeField] private GameObject handcuffPrefab;
 
     [Tooltip("완성된 수갑을 쌓을 DropZone (HandcuffPickupZone)")]
@@ -16,9 +14,8 @@ public class ConverterMachine : MonoBehaviour
     private bool isProcessing = false;
 
     // AutoSellNPC 호환용
-    private List<GameObject> outputStack = new List<GameObject>();
-    public bool HasOutput => handcuffDropZone != null ? handcuffDropZone.HasItems : outputStack.Count > 0;
-    public GameObject TakeOutputHandcuff() => handcuffDropZone != null ? handcuffDropZone.TakeItem() : null;
+    public bool HasOutput => handcuffDropZone != null && handcuffDropZone.HasItems;
+    public GameObject TakeOutputHandcuff() => handcuffDropZone?.TakeItem();
 
     public void ReceiveOre(int count = 1)
     {
@@ -44,17 +41,8 @@ public class ConverterMachine : MonoBehaviour
 
     private void SpawnHandcuff()
     {
-        if (handcuffPrefab == null) return;
-
-        Vector3 spawnPos = outputPoint != null ? outputPoint.position : transform.position + Vector3.up;
-        GameObject obj = Instantiate(handcuffPrefab, spawnPos, Quaternion.identity);
-
-        if (handcuffDropZone != null)
-            handcuffDropZone.PushItem(obj);
-        else if (outputPoint != null)
-        {
-            obj.transform.SetParent(outputPoint);
-            outputStack.Add(obj);
-        }
+        if (handcuffPrefab == null || handcuffDropZone == null) return;
+        GameObject obj = Instantiate(handcuffPrefab, transform.position + Vector3.up, Quaternion.identity);
+        handcuffDropZone.PushItem(obj);
     }
 }

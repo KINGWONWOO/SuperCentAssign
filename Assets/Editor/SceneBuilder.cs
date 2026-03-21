@@ -338,10 +338,6 @@ public static class SceneBuilder
             new Vector3(0.8f, 0.5f, 0.5f),
             new Color(0.50f, 0.50f, 0.55f));
 
-        var outputPt = new GameObject("OutputPoint");
-        outputPt.transform.SetParent(root.transform);
-        outputPt.transform.localPosition = new Vector3(-1.0f, 0.8f, 0f);
-
         var hcPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
             "Assets/Prefabs/HandcuffPrefab.prefab");
 
@@ -350,7 +346,6 @@ public static class SceneBuilder
 
         var cm = root.AddComponent<ConverterMachine>();
         var so = new SerializedObject(cm);
-        so.FindProperty("outputPoint").objectReferenceValue    = outputPt.transform;
         so.FindProperty("handcuffPrefab").objectReferenceValue = hcPrefab;
         so.ApplyModifiedPropertiesWithoutUndo();
 
@@ -484,17 +479,12 @@ public static class SceneBuilder
             new Vector3(1f, 0.6f, 1f), new Color(0.8f, 0.8f, 0.1f));
         MakeLabel(msObj.transform, "돈", new Vector3(0f, 0.8f, 0f), Color.yellow, 2.5f);
 
-        var msPt = new GameObject("StackPoint");
-        msPt.transform.SetParent(msObj.transform);
-        msPt.transform.localPosition = new Vector3(0f, 0.4f, 0f);
-
         var cashPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
             "Assets/Prefabs/CashPrefab.prefab");
 
         var ms = msObj.AddComponent<MoneySpawner>();
         var msSO = new SerializedObject(ms);
         msSO.FindProperty("moneyPrefab").objectReferenceValue = cashPrefab;
-        msSO.FindProperty("stackPoint").objectReferenceValue  = msPt.transform;
         msSO.ApplyModifiedPropertiesWithoutUndo();
 
         var dmObj = new GameObject("DeskManager");
