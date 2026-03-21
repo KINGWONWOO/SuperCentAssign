@@ -100,6 +100,27 @@ Assets/
 - 전체 20개 C# 스크립트 작성 완료 (Core 4 / UI 2 / Player 6 / Interactables 5 / NPC 3)
 - 단일 책임 원칙(SRP) 적용, 즉시 Unity에서 사용 가능한 완성 코드
 
+### update.txt 기반 전체 시스템 오버홀 (2026-03-21)
+- **MiningGrid** (NEW): 7열×20행 RockNode 그리드, 6초 리스폰, MineAt(width) 다중 채굴
+- **RockNode** (NEW): 스택 가득 찼어도 돌 사라짐, 워커 NPC용 MineForWorker()
+- **DeskZone + DeskManager** (NEW): ArrestZone 대체, 수갑→돈 변환, 수감자별 4개 처리
+- **MoneySpawner** (NEW): 수갑 판매마다 돈 스택 생성, 플레이어 픽업 지원
+- **SpeechBubble** (NEW): TMP 3D 빌보드 말풍선 (수갑 잔량 / No Cell!)
+- **WorkerNPC** (NEW): 행 왕복 자동 채굴, 광석→Converter 직접 전달
+- **AutoSellNPC** (NEW): 수갑 10개 배치 자동 판매 NPC
+- `GameEnums`: DrillCar 추가, PrisonerState 큐 시스템, MoneyPickup, UpgradeType 5종
+- `GameSettings`: 채굴 폭/스택(레벨별), 수갑 판매, 수감자 큐, 업그레이드 비용 등 전면 재편
+- `PlayerStackManager`: Ore 레벨별 제한(10/20/30), Handcuff/Cash 무제한
+- `PlayerToolManager`: GetMiningWidth() 추가, SetLevel()로 스택 한도 자동 갱신
+- `PlayerInteraction`: MiningGrid+DeskZone 대응, DrillCar 탑승 애니메이션
+- `ConverterMachine`: 1:1 비율(광석 1→수갑 1), 2초 처리
+- `DropZone`: MoneyPickup 타입 추가, 수갑 픽업 무제한화
+- `UpgradeZone`: 5종 업그레이드 트리 (Drill/DrillCar/WorkerHire/AutoSell/PrisonExpand)
+- `PrisonerAI`: 코루틴 이동, Desk→수갑4개→감방 상태머신, No Cell! 대기
+- `PrisonerSpawner`: 수요 기반 최대 2인 큐 시스템
+- `CellManager`: 기본 20명, ExpandCapacity(80) 업그레이드 지원
+- `CurrencyManager`: 수갑 재화 제거 (Cash만 관리)
+
 ### sample.mp4 기반 수정 및 씬 완성 (2026-03-21)
 - `PlayerStackManager`: MAX 인디케이터 오브젝트 필드 추가, 스택 가득 찰 때 표시
 - `CellManager`: TextMeshPro 3D 카운터 텍스트 추가 (X/Y 형식)
