@@ -104,6 +104,7 @@ public static class SceneBuilder
 
         BuildUpgradeZones(prisonResult.cellManager, grid, prisonResult.prison100);
         BuildManagers(gs);
+        BuildMoneyHUD();
         var playerObj = BuildPlayer();
 
         // 카메라 팔로우 타겟 연결
@@ -130,7 +131,7 @@ public static class SceneBuilder
                                       .GetActiveScene().GetRootGameObjects())
         {
             string n = go.name;
-            if (n == "Canvas" || n == "EventSystem") continue;
+            if (n == "EventSystem") continue;
             Object.DestroyImmediate(go);
         }
     }
@@ -143,17 +144,16 @@ public static class SceneBuilder
         var cam = new GameObject("Main Camera"); cam.tag = "MainCamera";
         cam.AddComponent<AudioListener>();
         var c = cam.AddComponent<Camera>();
-        c.fieldOfView = 60f;
+        c.fieldOfView = 50f;
         c.farClipPlane = 300f;
 
-        // view.png 기준 아이소메트릭 45° 뷰
-        // Y=45°: 채석장(+X방향)이 화면 상단에, Y축 50° 틸트
+        // 아이소메트릭 45° 뷰 (줌 인: offset 축소, FOV 축소)
         cam.transform.rotation = Quaternion.Euler(50f, 45f, 0f);
-        cam.transform.position = PLAYER_START + new Vector3(-7f, 11f, -7f);
+        cam.transform.position = PLAYER_START + new Vector3(-5f, 8f, -5f);
 
         var follow = cam.AddComponent<CameraFollow>();
         var soFollow = new SerializedObject(follow);
-        soFollow.FindProperty("offset").vector3Value = new Vector3(-7f, 11f, -7f);
+        soFollow.FindProperty("offset").vector3Value = new Vector3(-5f, 8f, -5f);
         soFollow.ApplyModifiedPropertiesWithoutUndo();
 
         return cam;
@@ -914,6 +914,55 @@ public static class SceneBuilder
         tmp.fontSize = fontSize;
         tmp.color = color;
         tmp.alignment = TMPro.TextAlignmentOptions.Center;
+        // 카메라 시점에서 정면으로 보이게 하는 빌보드 컴포넌트
+        obj.AddComponent<CameraBillboard>();
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // 머니 HUD (Screen Space Overlay Canvas, 우측 상단)
+    // ════════════════════════════════════════════════════════════
+    static void BuildMoneyHUD()
+    {
+        // Canvas
+        var canvasObj = new GameObject("MoneyHUD_Canvas");
+        var canvas = canvasObj.AddComponent<Canvas>();
+        canvas.renderMode = UnityEngine.RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 10;
+        canvasObj.AddComponent<UnityEngine.UI.CanvasScaler>();
+        canvasObj.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+        // 배경 패널 (반투명 검정)
+        var panelObj = new GameObject("Panel");
+        panelObj.transform.SetParent(canvasObj.transform, false);
+        var panelImg = panelObj.AddComponent<UnityEngine.UI.Image>();
+        panelImg.color = new Color(0f, 0f, 0f, 0.55f);
+        var panelRect = panelObj.GetComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(1f, 1f);
+        panelRect.anchorMax = new Vector2(1f, 1f);
+        panelRect.pivot     = new Vector2(1f, 1f);
+        panelRect.anchoredPosition = new Vector2(-16f, -16f);
+        panelRect.sizeDelta = new Vector2(180f, 60f);
+
+        // 텍스트
+        var textObj = new GameObject("CashText");
+        textObj.transform.SetParent(panelObj.transform, false);
+        var tmp = textObj.AddComponent<TMPro.TextMeshProUGUI>();
+        tmp.text = "$0";
+        tmp.fontSize = 32f;
+        tmp.fontStyle = TMPro.FontStyles.Bold;
+        tmp.color = new Color(1f, 0.9f, 0.1f); // 금색
+        tmp.alignment = TMPro.TextAlignmentOptions.MidlineRight;
+        var textRect = textObj.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(8f, 0f);
+        textRect.offsetMax = new Vector2(-8f, 0f);
+
+        // MoneyHUD 컴포넌트
+        var hud = canvasObj.AddComponent<MoneyHUD>();
+        var hudSO = new UnityEditor.SerializedObject(hud);
+        hudSO.FindProperty("cashText").objectReferenceValue = tmp;
+        hudSO.ApplyModifiedPropertiesWithoutUndo();
     }
 
     // 씬 뷰에서 드래그로 위치를 조정할 수 있는 컬러 마커 구체
