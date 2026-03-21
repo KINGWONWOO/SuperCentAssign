@@ -1,36 +1,33 @@
 using UnityEngine;
-using System.Collections.Generic;
 
-// Desk 옆에 배치. DeskManager가 수갑 판매 시 SpawnMoney() 호출.
-// 플레이어가 MoneyPickup DropZone에 진입하면 TakeMoney()로 가져감.
+// DeskManager가 수갑 판매 시 SpawnMoney() 호출.
+// 생성된 돈은 moneyDropZone(MoneyPickupZone)에 직접 쌓임.
 public class MoneySpawner : MonoBehaviour
 {
     [SerializeField] private GameObject moneyPrefab;
     [SerializeField] private Transform stackPoint;
-    [SerializeField] private float stackSpacingY = 0.12f;
 
-    private List<GameObject> moneyStack = new List<GameObject>();
+    [Tooltip("생성된 돈을 쌓을 DropZone (MoneyPickupZone)")]
+    [SerializeField] private DropZone moneyDropZone;
 
-    public bool HasMoney => moneyStack.Count > 0;
+    private float stackSpacingY = 0.12f;
+    private int fallbackCount = 0;
 
     public void SpawnMoney()
     {
         if (moneyPrefab == null) return;
 
         Transform pivot = stackPoint != null ? stackPoint : transform;
-        float height = moneyStack.Count * stackSpacingY;
-        Vector3 pos = pivot.position + Vector3.up * height;
-        GameObject obj = Instantiate(moneyPrefab, pos, Quaternion.identity, pivot);
-        moneyStack.Add(obj);
-    }
+        Vector3 spawnPos = pivot.position + Vector3.up * 0.3f;
+        GameObject obj = Instantiate(moneyPrefab, spawnPos, Quaternion.identity);
 
-    public GameObject TakeMoney()
-    {
-        if (moneyStack.Count == 0) return null;
-        int last = moneyStack.Count - 1;
-        GameObject obj = moneyStack[last];
-        moneyStack.RemoveAt(last);
-        if (obj != null) obj.transform.SetParent(null);
-        return obj;
+        if (moneyDropZone != null)
+            moneyDropZone.PushItem(obj);
+        else
+        {
+            obj.transform.SetParent(pivot);
+            obj.transform.localPosition = Vector3.up * (fallbackCount * stackSpacingY);
+            fallbackCount++;
+        }
     }
 }

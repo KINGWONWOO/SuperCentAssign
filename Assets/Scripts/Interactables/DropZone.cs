@@ -1,74 +1,71 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class DropZone : MonoBehaviour
 {
     [SerializeField] private DropZoneType zoneType;
 
-    [Tooltip("OreToConverter / HandcuffPickup 타입일 때 사용")]
+    [Tooltip("OreToConverter 타입일 때 사용")]
     [SerializeField] private ConverterMachine converterMachine;
 
-    [Tooltip("MoneyPickup 타입일 때 사용")]
-    [SerializeField] private MoneySpawner moneySpawner;
+    [Tooltip("HandcuffPickup/MoneyPickup: 아이템이 쌓일 기준점 (없으면 transform)")]
+    [SerializeField] private Transform stackRoot;
+
+    private readonly List<GameObject> items = new List<GameObject>();
+    private const float stackSpacingY = 0.18f;
+
+    public bool HasItems => items.Count > 0;
+
+    // ConverterMachine / MoneySpawner가 호출 — 변환 완료된 아이템을 이 존에 쌓음
+    public void PushItem(GameObject obj)
+    {
+        if (obj == null) return;
+        Transform root = stackRoot != null ? stackRoot : transform;
+        obj.transform.SetParent(root);
+        obj.transform.localPosition = new Vector3(0f, items.Count * stackSpacingY, 0f);
+        obj.transform.localRotation = Quaternion.identity;
+        items.Add(obj);
+    }
+
+    // AutoSellNPC 등 외부에서 직접 꺼낼 때 사용
+    public GameObject TakeItem()
+    {
+        if (items.Count == 0) return null;
+        int last = items.Count - 1;
+        GameObject obj = items[last];
+        items.RemoveAt(last);
+        if (obj != null) obj.transform.SetParent(null);
+        return obj;
+    }
+
+    private GameObject PopItem() => TakeItem();
 
     public void ProcessTransfer(PlayerStackManager stackManager)
     {
         switch (zoneType)
         {
-            case DropZoneType.OreToConverter:
-                DeliverOre(stackManager);
-                break;
-
-            case DropZoneType.HandcuffPickup:
-                PickupHandcuff(stackManager);
-                break;
-
-            case DropZoneType.MoneyPickup:
-                PickupMoney(stackManager);
-                break;
+            case DropZoneType.OreToConverter: DeliverOre(stackManager);                     break;
+            case DropZoneType.HandcuffPickup: PickupItem(stackManager, ItemType.Handcuff);  break;
+            case DropZoneType.MoneyPickup:    PickupItem(stackManager, ItemType.Cash);      break;
         }
     }
 
-    // 광석을 빠르게 Converter로 보냄 (oreDropSpeed 간격은 PlayerInteraction에서 제어)
     private void DeliverOre(PlayerStackManager stackManager)
     {
         if (!stackManager.HasItemOfType(ItemType.Ore)) return;
         if (converterMachine == null) return;
-
         StackItem ore = stackManager.RemoveTopItemOfType(ItemType.Ore);
-        if (ore != null)
-        {
-            converterMachine.ReceiveOre(1);
-            Destroy(ore.gameObject);
-        }
+        if (ore != null) { converterMachine.ReceiveOre(1); Destroy(ore.gameObject); }
     }
 
-    // 수갑 픽업 — 무제한 (IsFull 체크 없음)
-    private void PickupHandcuff(PlayerStackManager stackManager)
+    private void PickupItem(PlayerStackManager stackManager, ItemType type)
     {
-        if (converterMachine == null || !converterMachine.HasOutput) return;
-
-        GameObject handcuffObj = converterMachine.TakeOutputHandcuff();
-        if (handcuffObj == null) return;
-
-        StackItem si = handcuffObj.GetComponent<StackItem>();
-        if (si == null) si = handcuffObj.AddComponent<StackItem>();
-        si.Initialize(ItemType.Handcuff);
-
-        stackManager.AddExistingItem(si);
-    }
-
-    // 돈 픽업 — 플레이어 스택에 현금 아이템 추가
-    private void PickupMoney(PlayerStackManager stackManager)
-    {
-        if (moneySpawner == null || !moneySpawner.HasMoney) return;
-
-        GameObject moneyObj = moneySpawner.TakeMoney();
-        if (moneyObj == null) return;
-
-        StackItem si = moneyObj.GetComponent<StackItem>();
-        if (si == null) si = moneyObj.AddComponent<StackItem>();
-        si.Initialize(ItemType.Cash);
-
+        if (!HasItems) return;
+        GameObject obj = PopItem();
+        if (obj == null) return;
+        StackItem si = obj.GetComponent<StackItem>();
+        if (si == null) si = obj.AddComponent<StackItem>();
+        si.Initialize(type);
         stackManager.AddExistingItem(si);
     }
 }

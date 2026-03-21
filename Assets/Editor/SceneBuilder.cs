@@ -95,7 +95,7 @@ public static class SceneBuilder
 
         var grid     = BuildMiningGrid(gs);
         var converter = BuildConverter();
-        BuildDropZones(converter, null);
+        BuildDropZones(converter);
 
         var prisonResult = BuildPrison();
         var deskResult   = BuildDesk();
@@ -360,30 +360,38 @@ public static class SceneBuilder
     // ════════════════════════════════════════════════════════════
     // 드롭 존
     // ════════════════════════════════════════════════════════════
-    static void BuildDropZones(ConverterMachine converter, MoneySpawner ms)
+    static void BuildDropZones(ConverterMachine converter)
     {
         BuildDropZone("OreDropZone", ORE_DROP,
             new Vector3(3.5f, 2f, 3f),
-            DropZoneType.OreToConverter, converter, null,
-            COL_ZONE_ORE, "돌 두는 곳");
+            DropZoneType.OreToConverter, COL_ZONE_ORE, "돌 두는 곳",
+            conv: converter);
 
-        BuildDropZone("HandcuffPickupZone", HANDCUFF_PICKUP,
+        var handcuffDZ = BuildDropZone("HandcuffPickupZone", HANDCUFF_PICKUP,
             new Vector3(4f, 2f, 2.5f),
-            DropZoneType.HandcuffPickup, converter, null,
-            COL_ZONE_HC, "수갑 받아가는 곳");
+            DropZoneType.HandcuffPickup, COL_ZONE_HC, "수갑 받아가는 곳");
+
+        // ConverterMachine → HandcuffPickupZone 연결
+        var convSO = new SerializedObject(converter);
+        convSO.FindProperty("handcuffDropZone").objectReferenceValue = handcuffDZ;
+        convSO.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static void BuildMoneyPickupZone(MoneySpawner moneySpawner)
     {
-        BuildDropZone("MoneyPickupZone", MONEY_PICKUP_POS,
+        var moneyDZ = BuildDropZone("MoneyPickupZone", MONEY_PICKUP_POS,
             new Vector3(2.5f, 2f, 2f),
-            DropZoneType.MoneyPickup, null, moneySpawner,
-            COL_ZONE_MONEY, "돈 받아가는 곳");
+            DropZoneType.MoneyPickup, COL_ZONE_MONEY, "돈 받아가는 곳");
+
+        // MoneySpawner → MoneyPickupZone 연결
+        var msSO = new SerializedObject(moneySpawner);
+        msSO.FindProperty("moneyDropZone").objectReferenceValue = moneyDZ;
+        msSO.ApplyModifiedPropertiesWithoutUndo();
     }
 
-    static void BuildDropZone(string name, Vector3 pos, Vector3 size,
-        DropZoneType type, ConverterMachine conv, MoneySpawner ms,
-        Color color, string label)
+    static DropZone BuildDropZone(string name, Vector3 pos, Vector3 size,
+        DropZoneType type, Color color, string label,
+        ConverterMachine conv = null)
     {
         var obj = new GameObject(name);
         obj.transform.position = pos;
@@ -410,14 +418,26 @@ public static class SceneBuilder
                 .GetComponent<Collider>().enabled = false;
         }
 
+        // HandcuffPickup / MoneyPickup 전용: 아이템이 쌓이는 기준점
+        Transform stackRoot = null;
+        if (type == DropZoneType.HandcuffPickup || type == DropZoneType.MoneyPickup)
+        {
+            var sr = new GameObject("StackRoot");
+            sr.transform.SetParent(obj.transform);
+            sr.transform.localPosition = new Vector3(0f, -0.4f, 0f);
+            stackRoot = sr.transform;
+        }
+
         MakeLabel(obj.transform, label, new Vector3(0f, 0.6f, 0f), color * 1.2f, 2.5f);
 
         var dz = obj.AddComponent<DropZone>();
         var so = new SerializedObject(dz);
         so.FindProperty("zoneType").enumValueIndex = (int)type;
-        if (conv != null) so.FindProperty("converterMachine").objectReferenceValue = conv;
-        if (ms   != null) so.FindProperty("moneySpawner").objectReferenceValue     = ms;
+        if (conv != null)       so.FindProperty("converterMachine").objectReferenceValue = conv;
+        if (stackRoot != null)  so.FindProperty("stackRoot").objectReferenceValue = stackRoot;
         so.ApplyModifiedPropertiesWithoutUndo();
+
+        return dz;
     }
 
     // ════════════════════════════════════════════════════════════
