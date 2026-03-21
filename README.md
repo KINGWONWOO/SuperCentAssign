@@ -121,6 +121,16 @@ Assets/
 - `CellManager`: 기본 20명, ExpandCapacity(80) 업그레이드 지원
 - `CurrencyManager`: 수갑 재화 제거 (Cash만 관리)
 
+### place.png 기반 씬 자동 구성 EditorScript 추가 (2026-03-21)
+- **SceneBuilder.cs** (NEW): `Game → Rebuild Scene` 메뉴로 씬 전체 자동 재구성
+- place.png 레이아웃 기반 모든 오브젝트 위치 좌표 반영
+- 채광 그리드 (7×20, 울타리+레일), 컨버터 (컨베이어 롤러+드릴), 경찰 책상 (다리 4개)
+- 감옥 20명 블록 (회색) + 감옥 100명 블록 (녹색, 비활성)
+- 업그레이드 존 5종: fillBar + 비용 텍스트, DrillCar/Worker/AutoSell/Prison은 비활성 시작
+- 플레이어: 캡슐 몸체 + 구형 머리 + StackPoint + MaxIndicator, 모든 컴포넌트 자동 부착
+- 드롭 존 컬러 타일 (광석=노란색, 수갑=파란색, 돈=초록색) + 코너 마커
+- SerializedObject API로 모든 Inspector 참조 자동 연결
+
 ### sample.mp4 기반 수정 및 씬 완성 (2026-03-21)
 - `PlayerStackManager`: MAX 인디케이터 오브젝트 필드 추가, 스택 가득 찰 때 표시
 - `CellManager`: TextMeshPro 3D 카운터 텍스트 추가 (X/Y 형식)
