@@ -278,6 +278,13 @@ public static class SceneBuilder
         MakeLabel(group.transform, "채굴 구역 (7×20)",
             new Vector3(0f, 2.5f, -hd - 1.5f), Color.white, 3.5f);
 
+        // 그리드 코너 기둥 — 항상 보이는 주황 기둥으로 채굴 영역 시각화
+        Color col_corner = new Color(1f, 0.5f, 0f);
+        MakeChildCube(group, "GridCorner_00", new Vector3(-hw,  1.2f, -hd), new Vector3(0.25f, 2.5f, 0.25f), col_corner);
+        MakeChildCube(group, "GridCorner_10", new Vector3( hw,  1.2f, -hd), new Vector3(0.25f, 2.5f, 0.25f), col_corner);
+        MakeChildCube(group, "GridCorner_01", new Vector3(-hw,  1.2f,  hd), new Vector3(0.25f, 2.5f, 0.25f), col_corner);
+        MakeChildCube(group, "GridCorner_11", new Vector3( hw,  1.2f,  hd), new Vector3(0.25f, 2.5f, 0.25f), col_corner);
+
         // ── MiningGrid 컴포넌트 (group 자식) ─────────────────────────
         var gridObj = new GameObject("MiningGrid");
         gridObj.transform.SetParent(group.transform);
@@ -529,10 +536,18 @@ public static class SceneBuilder
                                   PRISON_20_CENTER + new Vector3(0f, 0f, -2f),
                                   new Color(0.2f, 1f, 0.3f));
 
+        // 감옥 밖 FIFO 대기줄 시작 위치 — 철창(-X면) 바로 앞, +Z 방향으로 줄 섬
+        float p20LeftX = PRISON_20_CENTER.x - PRISON_20_W * 0.5f - 1.5f;
+        var queueStart = MakeMarker("OutsideQueueStart", prisonRoot,
+                                    new Vector3(p20LeftX, 0f, PRISON_20_CENTER.z),
+                                    new Color(1f, 0.2f, 1f)); // 보라
+        queueStart.transform.rotation = Quaternion.LookRotation(Vector3.forward);
+
         var cm = prisonRoot.AddComponent<CellManager>();
         var so = new SerializedObject(cm);
-        so.FindProperty("cellRoot").objectReferenceValue        = cellRoot.transform;  // MakeMarker GameObject
-        so.FindProperty("cellCounterText").objectReferenceValue = counter;
+        so.FindProperty("cellRoot").objectReferenceValue          = cellRoot.transform;
+        so.FindProperty("outsideQueueStart").objectReferenceValue = queueStart.transform;
+        so.FindProperty("cellCounterText").objectReferenceValue   = counter;
         so.ApplyModifiedPropertiesWithoutUndo();
 
         return new PrisonResult { cellManager = cm, prison100 = p100 };

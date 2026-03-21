@@ -77,6 +77,17 @@ public class PrisonerAI : MonoBehaviour
         WalkToCell(cellPos);
     }
 
+    // 대기줄 내 순번 변경 시 새 위치로 이동 (FIFO 재배치)
+    public void MoveToQueuePosition(Transform newPos)
+    {
+        if (state != PrisonerState.WaitingOutsideCell) return;
+        SetMovement(WalkTo(newPos.position, () =>
+        {
+            state = PrisonerState.WaitingOutsideCell;
+            speechBubble?.Show("No Cell!");
+        }));
+    }
+
     private void TryGoToCell()
     {
         Transform cellPos = cellManager?.TryGetCellPosition(this);

@@ -126,8 +126,8 @@ public class MiningGrid : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    // 선택 시 돌 생성 위치를 씬 뷰에 미리 표시
-    void OnDrawGizmosSelected()
+    // 항상 표시 (선택 여부 무관)
+    void OnDrawGizmos()
     {
         int pCols = Application.isPlaying ? columns : previewColumns;
         int pRows = Application.isPlaying ? rows    : previewRows;
@@ -139,22 +139,21 @@ public class MiningGrid : MonoBehaviour
                           (pRows - 1) * pSZ * 0.5f);
 
         // 개별 돌 위치 (주황 와이어 박스)
-        Gizmos.color = new Color(1f, 0.6f, 0.1f, 0.6f);
+        Gizmos.color = new Color(1f, 0.55f, 0.1f, 0.5f);
         for (int r = 0; r < pRows; r++)
             for (int c = 0; c < pCols; c++)
                 Gizmos.DrawWireCube(origin + new Vector3(c * pSX, 0f, r * pSZ),
                                     new Vector3(0.5f, 0.55f, 0.5f));
 
-        // 전체 영역 (빨간 외곽선)
+        // 전체 영역 외곽선 (굵고 눈에 띄게)
         float totalW = (pCols - 1) * pSX + pSX;
         float totalD = (pRows - 1) * pSZ + pSZ;
-        Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.5f);
-        Gizmos.DrawWireCube(transform.position, new Vector3(totalW, 0.6f, totalD));
+        Gizmos.color = new Color(1f, 0.3f, 0f, 0.9f);
+        Gizmos.DrawWireCube(transform.position, new Vector3(totalW, 1f, totalD));
 
         // 레이블
-        UnityEditor.Handles.color = Color.white;
         UnityEditor.Handles.Label(transform.position + Vector3.up * 2f,
-            $"MiningGrid {pCols}×{pRows}  간격({pSX},{pSZ})");
+            $"MiningGrid {pCols}×{pRows}");
     }
 #endif
 }
