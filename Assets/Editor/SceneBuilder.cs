@@ -217,6 +217,7 @@ public static class SceneBuilder
         // ── MiningGridGroup (이 오브젝트를 옮기면 전체 이동) ────────
         var group = new GameObject("MiningGridGroup");
         group.transform.position = GRID_CENTER;
+        group.transform.rotation = Quaternion.Euler(0f, 90f, 0f); // 입구가 플레이어(-Z 방향) 쪽을 향하게
 
         // 그리드 바닥
         var gridFloor = MakeChildCube(group, "MiningGridFloor",
@@ -243,8 +244,10 @@ public static class SceneBuilder
         }
 
         // 좌/우 세로 울타리 (Z방향으로 뻗음, 이쪽이 긴 면)
+        // side=1 (local +X) 은 90° 회전 후 플레이어 방향(-Z)을 향하는 입구 → 제거
         for (int side = 0; side < 2; side++)
         {
+            if (side == 1) continue; // 입구 쪽 펜스 제거
             float lx = side == 0 ? -hw : hw;
             int postCount = 11;
             for (int r = 0; r < postCount; r++)
