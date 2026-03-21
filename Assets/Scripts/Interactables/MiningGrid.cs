@@ -28,8 +28,10 @@ public class MiningGrid : MonoBehaviour
         spacingX = s.gridSpacingX;
         spacingZ = s.gridSpacingZ;
 
+        // 그리드를 transform.position 기준으로 X/Z 양방향 센터링
         gridOrigin = transform.position
-            - new Vector3((columns - 1) * spacingX * 0.5f, 0f, 0f);
+            - new Vector3((columns - 1) * spacingX * 0.5f, 0f,
+                          (rows    - 1) * spacingZ * 0.5f);
 
         BuildGrid();
         AdjustCollider();
@@ -60,7 +62,7 @@ public class MiningGrid : MonoBehaviour
         float totalX = (columns - 1) * spacingX + spacingX;
         float totalZ = (rows - 1) * spacingZ + spacingZ;
         bc.size = new Vector3(totalX, 3f, totalZ);
-        bc.center = new Vector3(0f, 0f, (rows - 1) * spacingZ * 0.5f);
+        bc.center = Vector3.zero; // gridOrigin이 이미 센터링됨
     }
 
     // 월드 위치 기준으로 가장 가까운 행을 찾아 width 폭만큼 채굴
