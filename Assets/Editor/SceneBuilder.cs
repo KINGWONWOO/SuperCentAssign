@@ -21,41 +21,40 @@ using System.Collections.Generic;
 /// </summary>
 public static class SceneBuilder
 {
-    // ── 위치 좌표 (place.png 기준) ───────────────────────────────
-    // 채굴 구역: 우측, 세로(Z 방향으로 길게)
-    static readonly Vector3 GRID_CENTER       = new Vector3(18f,  0f, 10f);
+    // ── 위치 좌표 (씬 실측값 기준) ───────────────────────────────
+    // 채굴 구역
+    static readonly Vector3 GRID_CENTER       = new Vector3(20.46f, 0f,  4.26f);
 
     // 변환 시스템
-    static readonly Vector3 ORE_DROP          = new Vector3(8f,   0f, 13f);
-    static readonly Vector3 CONVERTER         = new Vector3(5f,   0f, 17f);
-    static readonly Vector3 HANDCUFF_PICKUP   = new Vector3(0f,   0f, 17f);
+    static readonly Vector3 ORE_DROP          = new Vector3( 5.42f, 0f, 11.68f);
+    static readonly Vector3 CONVERTER         = new Vector3( 3.70f, 0f, 14.90f);
+    static readonly Vector3 HANDCUFF_PICKUP   = new Vector3(-0.82f, 0f, 15.11f);
 
-    // 수감자/책상 구역: 좌측
-    static readonly Vector3 PRISONER_SPAWN    = new Vector3(-10f, 0f, 18f);
-    static readonly Vector3 PRISONER_WAIT     = new Vector3(-7f,  0f, 13f);
-    static readonly Vector3 DESK_POS          = new Vector3(-4f,  0f, 13f);
-    static readonly Vector3 MONEY_SPAWNER_POS = new Vector3(-2f,  0f, 13f);
-    static readonly Vector3 MONEY_PICKUP_POS  = new Vector3(-2f,  0f, 11f);
+    // 수감자/책상 구역
+    static readonly Vector3 PRISONER_SPAWN    = new Vector3(-10f,  0f, 18f);
+    static readonly Vector3 PRISONER_WAIT     = new Vector3( -7f,  0f, 13f);
+    static readonly Vector3 DESK_POS          = new Vector3( -8f,  0f, 11f);   // PoliceDeskArea
+    static readonly Vector3 DESK_FRONT_POS    = new Vector3( -4f,  0f, 11.5f); // 수감자가 서는 책상 앞
+    static readonly Vector3 MONEY_SPAWNER_POS = new Vector3( -2f,  0f, 13f);
+    static readonly Vector3 MONEY_PICKUP_POS  = new Vector3(-7.4f, 0f,  8.3f);
     static readonly float   PRISONER_ROAD_X   = -10f;
 
     // 업그레이드 존
-    static readonly Vector3 UPG_DRILL         = new Vector3(8f,   0f, 9f);
-    static readonly Vector3 UPG_DRILLCAR      = new Vector3(10f,  0f, 9f);
-    static readonly Vector3 UPG_WORKER        = new Vector3(8f,   0f, 6f);
-    static readonly Vector3 UPG_AUTOSELL      = new Vector3(-4f,  0f, 9f);
-    static readonly Vector3 UPG_PRISON        = new Vector3(2f,   0f, 2f);
+    static readonly Vector3 UPG_DRILL         = new Vector3( 5.02f, 0f, 6.24f);
+    static readonly Vector3 UPG_DRILLCAR      = new Vector3(10f,    0f, 9f);
+    static readonly Vector3 UPG_WORKER        = new Vector3( 8f,    0f, 6f);
+    static readonly Vector3 UPG_AUTOSELL      = new Vector3(-4f,    0f, 9f);
+    static readonly Vector3 UPG_PRISON        = new Vector3( 2f,    0f, 2f);
 
-    // 감옥: 하단, 입구가 왼쪽(-X 방향)을 향함
-    //   Prison_20: 폭8 × 깊이10,  left face X = center.x - 4
-    //   Prison_100: 폭16 × 깊이10, left face X = center.x - 8  (비활성 시작)
-    static readonly Vector3 PRISON_20_CENTER  = new Vector3(3f,   0f, -7f);
+    // 감옥
+    static readonly Vector3 PRISON_20_CENTER  = new Vector3( 3f,  0f, -7f);
     static readonly Vector3 PRISON_100_CENTER = new Vector3(15f,  0f, -7f);
     static readonly float   PRISON_20_W       = 8f;
     static readonly float   PRISON_100_W      = 16f;
     static readonly float   PRISON_DEPTH      = 10f;
 
-    // 플레이어 (y=0: CC center=(0,1,0) height=2 → 발바닥이 y=0에 닿음)
-    static readonly Vector3 PLAYER_START      = new Vector3(-1f,  0f, 7f);
+    // 플레이어
+    static readonly Vector3 PLAYER_START      = new Vector3(-1f, 0f, 7f);
 
     // ── 색상 팔레트 ───────────────────────────────────────────────
     static Color COL_ROCK       = new Color(0.62f, 0.58f, 0.54f);
@@ -646,7 +645,7 @@ public static class SceneBuilder
         var waitPt  = MakeMarker("WaitPosition", null, PRISONER_WAIT,
                                   new Color(1f, 0.9f, 0f));     // 노랑 = 대기
         var deskPt  = MakeMarker("DeskPosition", null,
-                          DESK_POS + new Vector3(0f, 0f, -1.5f),
+                          DESK_FRONT_POS,
                                   new Color(0.2f, 0.8f, 1f));   // 하늘 = 책상 앞
 
         var prisonerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
