@@ -43,3 +43,5 @@ ProjectSettings/         # 프로젝트 설정 파일
 - Unity URP 기본 씬 및 렌더 설정 포함
 - `.gitignore` 추가 (Library, Temp, Logs 등 제외)
 - `.vsconfig` 추가 (Visual Studio Unity 워크로드 지정)
+- `main` 브랜치를 `201924407` 브랜치에 통합 (머지)
+- `conversation_export.txt` 추가 (Claude Code 대화 기록 export)
