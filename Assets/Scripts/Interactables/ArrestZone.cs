@@ -5,6 +5,9 @@ public class ArrestZone : MonoBehaviour
 {
     [SerializeField] private CellManager cellManager;
 
+    [Tooltip("체포 후 플레이어 등에 올라갈 현금 프리팹")]
+    [SerializeField] private GameObject cashPrefab;
+
     private List<PrisonerAI> prisonersInZone = new List<PrisonerAI>();
 
     void OnTriggerEnter(Collider other)
@@ -26,22 +29,23 @@ public class ArrestZone : MonoBehaviour
         if (cellManager != null && cellManager.IsFull) return;
         if (!stackManager.HasItemOfType(ItemType.Handcuff)) return;
 
-        // 대기 중인 죄수 중 한 명 체포
-        PrisonerAI target = prisonersInZone.Find(p =>
-            p != null && p.CurrentState == PrisonerState.Waiting);
-
+        PrisonerAI target = prisonersInZone.Find(
+            p => p != null && p.CurrentState == PrisonerState.Waiting);
         if (target == null) return;
 
-        // 수갑 소비 (스택 + CurrencyManager)
+        // 수갑 소비: 스택에서 제거 + CurrencyManager 차감
         StackItem handcuff = stackManager.RemoveTopItemOfType(ItemType.Handcuff);
         if (handcuff != null) Destroy(handcuff.gameObject);
         CurrencyManager.Instance.SpendHandcuff();
 
-        // 죄수 수감
+        // 죄수 수감 처리
         prisonersInZone.Remove(target);
         target.Arrest(cellManager);
 
-        // 즉시 현금 보상
-        CurrencyManager.Instance.AddCash(GameManager.Instance.Settings.cashPerPrisoner);
+        // 현금 획득: 플레이어 등에 현금 아이템 추가 + CurrencyManager 반영
+        GameSettings settings = GameManager.Instance.Settings;
+        if (cashPrefab != null)
+            stackManager.AddItem(cashPrefab, ItemType.Cash);
+        CurrencyManager.Instance.AddCash(settings.cashPerPrisoner);
     }
 }

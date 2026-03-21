@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
 
 public class CellManager : MonoBehaviour
 {
@@ -8,6 +9,9 @@ public class CellManager : MonoBehaviour
 
     [Tooltip("수감 시 활성화될 침대 오브젝트 배열 (cellPositions와 순서 일치)")]
     [SerializeField] private GameObject[] bedObjects;
+
+    [Tooltip("감방 위에 표시될 X/Y 형식 카운터 텍스트 (TextMeshPro 3D)")]
+    [SerializeField] private TextMeshPro cellCounterText;
 
     private List<PrisonerAI> prisoners = new List<PrisonerAI>();
     private int capacity;
@@ -18,13 +22,16 @@ public class CellManager : MonoBehaviour
     void Start()
     {
         capacity = GameManager.Instance.Settings.defaultCellCapacity;
-        capacity = Mathf.Min(capacity, cellPositions != null ? cellPositions.Length : capacity);
+        if (cellPositions != null)
+            capacity = Mathf.Min(capacity, cellPositions.Length);
+        RefreshCounter();
     }
 
     public bool TryAddPrisoner(PrisonerAI prisoner)
     {
         if (IsFull) return false;
         prisoners.Add(prisoner);
+        RefreshCounter();
         return true;
     }
 
@@ -33,7 +40,6 @@ public class CellManager : MonoBehaviour
         int index = prisoners.Count - 1;
         if (cellPositions == null || index >= cellPositions.Length) return null;
 
-        // 해당 침대 활성화
         if (bedObjects != null && index < bedObjects.Length && bedObjects[index] != null)
             bedObjects[index].SetActive(true);
 
@@ -43,5 +49,12 @@ public class CellManager : MonoBehaviour
     public void ExpandCapacity(int additionalSlots)
     {
         capacity += additionalSlots;
+        RefreshCounter();
+    }
+
+    private void RefreshCounter()
+    {
+        if (cellCounterText != null)
+            cellCounterText.text = $"{prisoners.Count}/{capacity}";
     }
 }

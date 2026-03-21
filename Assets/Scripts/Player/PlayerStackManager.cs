@@ -5,25 +5,35 @@ using System.Collections.Generic;
 public class PlayerStackManager : MonoBehaviour
 {
     [SerializeField] private Transform stackPoint;
-    [SerializeField] private int maxStack = 15;
     [SerializeField] private float itemSpacingY = 0.22f;
     [SerializeField] private float lerpSpeed = 12f;
+    [SerializeField] private GameObject maxIndicatorObject;
 
+    private int maxStack = 15;
     private List<StackItem> stackedItems = new List<StackItem>();
 
     public bool IsFull => stackedItems.Count >= maxStack;
     public int Count => stackedItems.Count;
 
-    public void SetMaxStack(int max) { maxStack = max; }
+    void Start()
+    {
+        if (GameManager.Instance != null)
+            maxStack = GameManager.Instance.Settings.maxStackCount;
+        SetMaxIndicator(false);
+    }
 
-    // 이미 씬에 존재하는 StackItem을 스택에 편입 (Instantiate 없이)
+    public void SetMaxStack(int max)
+    {
+        maxStack = max;
+    }
+
     public bool AddExistingItem(StackItem existingItem)
     {
         if (IsFull) return false;
-
         existingItem.transform.SetParent(stackPoint);
         stackedItems.Add(existingItem);
         StartCoroutine(LerpToPosition(existingItem.transform, stackedItems.Count - 1));
+        SetMaxIndicator(IsFull);
         return true;
     }
 
@@ -38,9 +48,8 @@ public class PlayerStackManager : MonoBehaviour
 
         obj.transform.SetParent(stackPoint);
         stackedItems.Add(si);
-
-        int targetIndex = stackedItems.Count - 1;
-        StartCoroutine(LerpToPosition(obj.transform, targetIndex));
+        StartCoroutine(LerpToPosition(obj.transform, stackedItems.Count - 1));
+        SetMaxIndicator(IsFull);
         return true;
     }
 
@@ -49,14 +58,14 @@ public class PlayerStackManager : MonoBehaviour
         for (int i = stackedItems.Count - 1; i >= 0; i--)
         {
             if (stackedItems[i] == null) continue;
-            if (stackedItems[i].ItemType == requiredType)
-            {
-                StackItem item = stackedItems[i];
-                stackedItems.RemoveAt(i);
-                item.transform.SetParent(null);
-                RefreshPositions();
-                return item;
-            }
+            if (stackedItems[i].ItemType != requiredType) continue;
+
+            StackItem item = stackedItems[i];
+            stackedItems.RemoveAt(i);
+            item.transform.SetParent(null);
+            RefreshPositions();
+            SetMaxIndicator(IsFull);
+            return item;
         }
         return null;
     }
@@ -66,10 +75,12 @@ public class PlayerStackManager : MonoBehaviour
         for (int i = stackedItems.Count - 1; i >= 0; i--)
         {
             if (stackedItems[i] == null) continue;
+
             StackItem item = stackedItems[i];
             stackedItems.RemoveAt(i);
             item.transform.SetParent(null);
             RefreshPositions();
+            SetMaxIndicator(IsFull);
             return item;
         }
         return null;
@@ -86,6 +97,12 @@ public class PlayerStackManager : MonoBehaviour
         foreach (var item in stackedItems)
             if (item != null && item.ItemType == type) count++;
         return count;
+    }
+
+    private void SetMaxIndicator(bool active)
+    {
+        if (maxIndicatorObject != null)
+            maxIndicatorObject.SetActive(active);
     }
 
     private void RefreshPositions()

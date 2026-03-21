@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
+// Player 오브젝트에 부착.
+// Player에는 CharacterController + Rigidbody(isKinematic=true) + SphereCollider(isTrigger=true)가 함께 있어야
+// OnTriggerEnter/Exit 이벤트가 정상 발동된다.
 public class PlayerInteraction : MonoBehaviour
 {
     private PlayerStackManager stackManager;
@@ -40,7 +43,7 @@ public class PlayerInteraction : MonoBehaviour
         if (other.GetComponent<ArrestZone>() != null) StopArrest();
     }
 
-    // ───── Mining ─────
+    // ─── Mining ───────────────────────────────────────────────────
 
     private void TryStartMining(MiningNode node)
     {
@@ -67,7 +70,6 @@ public class PlayerInteraction : MonoBehaviour
                 yield return new WaitForSeconds(0.5f);
                 continue;
             }
-
             playerAnimation?.SetMining(true);
             currentMiningNode.Mine(stackManager);
 
@@ -77,11 +79,10 @@ public class PlayerInteraction : MonoBehaviour
 
             yield return new WaitForSeconds(interval);
         }
-
         playerAnimation?.SetMining(false);
     }
 
-    // ───── Drop Zone ─────
+    // ─── Drop Zone ────────────────────────────────────────────────
 
     private void TryStartDrop(DropZone dz)
     {
@@ -107,7 +108,7 @@ public class PlayerInteraction : MonoBehaviour
         }
     }
 
-    // ───── Upgrade Zone ─────
+    // ─── Upgrade Zone ─────────────────────────────────────────────
 
     private void TryStartUpgrade(UpgradeZone uz)
     {
@@ -127,12 +128,12 @@ public class PlayerInteraction : MonoBehaviour
     {
         while (currentUpgradeZone == uz)
         {
-            uz.TryContribute(toolManager);
+            uz.TryContribute(toolManager, stackManager);
             yield return new WaitForSeconds(0.1f);
         }
     }
 
-    // ───── Arrest Zone ─────
+    // ─── Arrest Zone ──────────────────────────────────────────────
 
     private void TryStartArrest(ArrestZone az)
     {
