@@ -88,7 +88,7 @@ public static class SceneBuilder
 
         ClearScene();
         var gs = LoadOrCreateGameSettings();
-        SetupCamera();
+        var camObj = SetupCamera();
         SetupLighting();
 
         BuildFloorAndRoad();
@@ -104,7 +104,16 @@ public static class SceneBuilder
 
         BuildUpgradeZones(prisonResult.cellManager, grid, prisonResult.prison100);
         BuildManagers(gs);
-        BuildPlayer();
+        var playerObj = BuildPlayer();
+
+        // 카메라 팔로우 타겟 연결
+        var follow = camObj.GetComponent<CameraFollow>();
+        if (follow != null)
+        {
+            var soFollow = new SerializedObject(follow);
+            soFollow.FindProperty("target").objectReferenceValue = playerObj.transform;
+            soFollow.ApplyModifiedPropertiesWithoutUndo();
+        }
 
         Debug.Log("[SceneBuilder] ✅ place.png 기반 씬 재구성 완료!");
         EditorSceneManager.MarkSceneDirty(
@@ -129,15 +138,18 @@ public static class SceneBuilder
     // ════════════════════════════════════════════════════════════
     // 카메라 & 조명
     // ════════════════════════════════════════════════════════════
-    static void SetupCamera()
+    static GameObject SetupCamera()
     {
         var cam = new GameObject("Main Camera"); cam.tag = "MainCamera";
         cam.AddComponent<AudioListener>();
         var c = cam.AddComponent<Camera>();
-        c.fieldOfView = 55f;
+        c.fieldOfView = 60f;
         c.farClipPlane = 300f;
-        cam.transform.position = new Vector3(4f, 28f, -5f);
-        cam.transform.rotation = Quaternion.Euler(60f, 0f, 0f);
+        // 초기 위치는 CameraFollow가 런타임에 결정 — 편집 시 미리보기용
+        cam.transform.position = new Vector3(0f, 10f, -7f);
+        cam.transform.rotation = Quaternion.Euler(50f, 0f, 0f);
+        cam.AddComponent<CameraFollow>(); // 플레이어 target은 아래에서 연결
+        return cam;
     }
 
     static void SetupLighting()
@@ -753,7 +765,7 @@ public static class SceneBuilder
     // ════════════════════════════════════════════════════════════
     // 플레이어
     // ════════════════════════════════════════════════════════════
-    static void BuildPlayer()
+    static GameObject BuildPlayer()
     {
         var player = new GameObject("Player");
         player.tag = "Player";
@@ -828,6 +840,7 @@ public static class SceneBuilder
         ptmSO.ApplyModifiedPropertiesWithoutUndo();
 
         player.AddComponent<PlayerInteraction>();
+        return player;
     }
 
     // ════════════════════════════════════════════════════════════
