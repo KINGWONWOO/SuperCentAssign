@@ -1,0 +1,58 @@
+# Unity
+Library/
+Temp/
+Obj/
+obj/
+Build/
+Builds/
+UserSettings/
+Logs/
+MemoryCaptures/
+
+# Asset Store Tools
+**/Assets/AssetStoreTools*
+
+# Visual Studio
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# OS
+.DS_Store*
+Thumbs.db
+Desktop.ini
+
+# Build outputs
+*.apk
+*.aab
+*.app
+*.unitypackage
+
+# Crash/analytics
+sysinfo.txt
+crashlytics-build.properties
+
+# Addressables
+**/Assets/AddressableAssetsData/*/*.bin*
+**/Assets/StreamingAssets/aa.meta
+**/Assets/StreamingAssets/*/aa/*
+
+# Plastic SCM
+/Assets/Plugins/PlasticSCM*
