@@ -121,6 +121,15 @@ Assets/
 - `CellManager`: 기본 20명, ExpandCapacity(80) 업그레이드 지원
 - `CurrencyManager`: 수갑 재화 제거 (Cash만 관리)
 
+### SceneBuilder v3 - 채석장/감옥/그룹화 전면 수정 (2026-03-21)
+- **MiningGrid.cs**: gridOrigin Z축 센터링 추가 (펜스와 암석 위치 일치)
+- **MiningGridGroup**: 펜스/바닥/레이블 모두 자식 그룹화 → 한 번에 이동 가능
+- **채석장 세로 배치**: GRID_CENTER=(18,0,10), 7열(X) × 20행(Z) 세로로 긴 형태
+- **감옥 입구 왼쪽**: `BuildBarsLeft()` 신규 함수, Z방향 철창으로 -X면 입구 구성
+- **확장 감옥 버그 수정**: `GameObject.Find()` 비활성 오브젝트 미탐지 → `PrisonResult` 직접 참조
+- **확장 감옥 구현**: PrisonExpand 업그레이드 완료 시 Prison_100 활성화 + ExpandCapacity 호출
+- **수감자 도로 그룹화**: `PrisonerRoadGroup` (세로 도로 + 감옥 입구 연결 가로 도로)
+
 ### place.png 기반 씬 자동 구성 EditorScript 추가 (2026-03-21)
 - **SceneBuilder.cs** (NEW): `Game → Rebuild Scene` 메뉴로 씬 전체 자동 재구성
 - place.png 레이아웃 기반 모든 오브젝트 위치 좌표 반영
