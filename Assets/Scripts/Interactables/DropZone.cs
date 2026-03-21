@@ -4,8 +4,11 @@ public class DropZone : MonoBehaviour
 {
     [SerializeField] private DropZoneType zoneType;
 
-    [Tooltip("OreToConverter 타입일 때 사용")]
+    [Tooltip("OreToConverter / HandcuffPickup 타입일 때 사용")]
     [SerializeField] private ConverterMachine converterMachine;
+
+    [Tooltip("MoneyPickup 타입일 때 사용")]
+    [SerializeField] private MoneySpawner moneySpawner;
 
     public void ProcessTransfer(PlayerStackManager stackManager)
     {
@@ -18,9 +21,14 @@ public class DropZone : MonoBehaviour
             case DropZoneType.HandcuffPickup:
                 PickupHandcuff(stackManager);
                 break;
+
+            case DropZoneType.MoneyPickup:
+                PickupMoney(stackManager);
+                break;
         }
     }
 
+    // 광석을 빠르게 Converter로 보냄 (oreDropSpeed 간격은 PlayerInteraction에서 제어)
     private void DeliverOre(PlayerStackManager stackManager)
     {
         if (!stackManager.HasItemOfType(ItemType.Ore)) return;
@@ -34,24 +42,33 @@ public class DropZone : MonoBehaviour
         }
     }
 
+    // 수갑 픽업 — 무제한 (IsFull 체크 없음)
     private void PickupHandcuff(PlayerStackManager stackManager)
     {
-        if (stackManager.IsFull) return;
         if (converterMachine == null || !converterMachine.HasOutput) return;
 
-        // 기계 출력 스택에서 오브젝트 꺼내기
         GameObject handcuffObj = converterMachine.TakeOutputHandcuff();
         if (handcuffObj == null) return;
 
-        // 플레이어 스택에 추가 (StackItem 컴포넌트 직접 설정 후 AddItem 우회)
         StackItem si = handcuffObj.GetComponent<StackItem>();
         if (si == null) si = handcuffObj.AddComponent<StackItem>();
         si.Initialize(ItemType.Handcuff);
 
-        // PlayerStackManager 내부 리스트에 직접 편입 (별도 Instantiate 없이)
         stackManager.AddExistingItem(si);
+    }
 
-        // CurrencyManager 동기화
-        CurrencyManager.Instance.AddHandcuffs(1);
+    // 돈 픽업 — 플레이어 스택에 현금 아이템 추가
+    private void PickupMoney(PlayerStackManager stackManager)
+    {
+        if (moneySpawner == null || !moneySpawner.HasMoney) return;
+
+        GameObject moneyObj = moneySpawner.TakeMoney();
+        if (moneyObj == null) return;
+
+        StackItem si = moneyObj.GetComponent<StackItem>();
+        if (si == null) si = moneyObj.AddComponent<StackItem>();
+        si.Initialize(ItemType.Cash);
+
+        stackManager.AddExistingItem(si);
     }
 }

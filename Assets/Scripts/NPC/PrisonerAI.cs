@@ -1,120 +1,143 @@
 using UnityEngine;
-using UnityEngine.AI;
+using System.Collections;
 
-[RequireComponent(typeof(NavMeshAgent))]
+// NavMesh 없이 Vector3.MoveTowards로 이동하는 수감자 AI.
+// 모든 이동은 코루틴으로 처리. Update는 사용하지 않음.
 public class PrisonerAI : MonoBehaviour
 {
-    [SerializeField] private Transform[] waypoints;
-    [SerializeField] private float waitTimeAtPoint = 2f;
+    [SerializeField] private SpeechBubble speechBubble;
 
-    private NavMeshAgent agent;
-    private Animator animator;
+    private PrisonerState state = PrisonerState.WalkingToWaitPos;
+    public PrisonerState CurrentState => state;
 
-    private PrisonerState currentState = PrisonerState.Roaming;
-    public PrisonerState CurrentState => currentState;
+    private DeskManager deskManager;
+    private CellManager cellManager;
 
-    private int currentWaypoint = 0;
-    private float waitTimer = 0f;
-    private Transform cellTarget;
+    private int handcuffsReceived = 0;
+    private int handcuffsNeeded = 4;
+    private float moveSpeed = 3.5f;
 
-    private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private Coroutine activeMovement;
 
     void Awake()
     {
-        agent = GetComponent<NavMeshAgent>();
-        animator = GetComponentInChildren<Animator>();
+        if (GameManager.Instance != null)
+        {
+            GameSettings s = GameManager.Instance.Settings;
+            handcuffsNeeded = s.handcuffsPerPrisoner;
+            moveSpeed = s.prisonerMoveSpeed;
+        }
     }
 
-    void Start()
+    public void Initialize(Transform waitPos, DeskManager desk, CellManager cell)
     {
-        if (waypoints != null && waypoints.Length > 0)
+        deskManager = desk;
+        cellManager = cell;
+        state = PrisonerState.WalkingToWaitPos;
+        UpdateBubble();
+        SetMovement(WalkTo(waitPos.position, () =>
         {
-            currentState = PrisonerState.Roaming;
-            MoveToNextWaypoint();
+            state = PrisonerState.WaitingBehindDesk;
+        }));
+    }
+
+    // PrisonerSpawner가 Desk 슬롯 열리면 호출
+    public void AdvanceToDesk(Transform deskPos)
+    {
+        state = PrisonerState.WalkingToWaitPos;
+        SetMovement(WalkTo(deskPos.position, () =>
+        {
+            state = PrisonerState.AtDesk;
+            deskManager?.RegisterPrisoner(this);
+        }));
+    }
+
+    // DeskManager가 수갑 전달 시 호출
+    public void ReceiveHandcuff()
+    {
+        handcuffsReceived++;
+        int remaining = handcuffsNeeded - handcuffsReceived;
+        if (remaining > 0)
+        {
+            UpdateBubble();
         }
         else
         {
-            currentState = PrisonerState.Waiting;
+            speechBubble?.Hide();
+            state = PrisonerState.FullyProcessed;
+            deskManager?.OnPrisonerLeft();
+            TryGoToCell();
         }
     }
 
-    void Update()
+    public void OnCellAvailable(Transform cellPos)
     {
-        animator?.SetFloat(SpeedHash, agent.velocity.magnitude);
-
-        switch (currentState)
-        {
-            case PrisonerState.Roaming:
-                UpdateRoaming();
-                break;
-
-            case PrisonerState.Waiting:
-                // 플레이어의 체포를 기다림 (ArrestZone이 담당)
-                break;
-
-            case PrisonerState.Arrested:
-                UpdateArrested();
-                break;
-        }
+        if (state != PrisonerState.WaitingOutsideCell) return;
+        speechBubble?.Hide();
+        WalkToCell(cellPos);
     }
 
-    private void UpdateRoaming()
+    private void TryGoToCell()
     {
-        if (agent.pathPending) return;
-        if (agent.remainingDistance > agent.stoppingDistance) return;
-
-        waitTimer += Time.deltaTime;
-        if (waitTimer >= waitTimeAtPoint)
+        Transform cellPos = cellManager?.TryGetCellPosition(this);
+        if (cellPos != null)
         {
-            waitTimer = 0f;
-            currentWaypoint++;
-
-            if (currentWaypoint >= waypoints.Length)
+            WalkToCell(cellPos);
+        }
+        else
+        {
+            Transform outsidePos = cellManager?.GetOutsideWaitPosition(this);
+            if (outsidePos != null)
             {
-                // 마지막 웨이포인트 도달 → 체포 대기
-                currentState = PrisonerState.Waiting;
-                agent.ResetPath();
-            }
-            else
-            {
-                MoveToNextWaypoint();
+                SetMovement(WalkTo(outsidePos.position, () =>
+                {
+                    state = PrisonerState.WaitingOutsideCell;
+                    speechBubble?.Show("No Cell!");
+                }));
             }
         }
     }
 
-    private void UpdateArrested()
+    private void WalkToCell(Transform cellPos)
     {
-        if (cellTarget == null) return;
-        if (agent.pathPending) return;
-        if (agent.remainingDistance > agent.stoppingDistance) return;
-
-        // 감방 도착
-        currentState = PrisonerState.InCell;
-        agent.ResetPath();
+        state = PrisonerState.WalkingToCell;
+        SetMovement(WalkTo(cellPos.position, () =>
+        {
+            state = PrisonerState.InCell;
+            cellManager?.ConfirmPrisonerInCell(this);
+        }));
     }
 
-    public void Arrest(CellManager cellManager)
+    private void SetMovement(IEnumerator routine)
     {
-        if (!cellManager.TryAddPrisoner(this)) return;
-
-        currentState = PrisonerState.Arrested;
-        cellTarget = cellManager.GetNextCellPosition();
-
-        if (cellTarget != null)
-            agent.SetDestination(cellTarget.position);
+        if (activeMovement != null) StopCoroutine(activeMovement);
+        activeMovement = StartCoroutine(routine);
     }
 
-    public void SetWaypoints(Transform[] newWaypoints)
+    private IEnumerator WalkTo(Vector3 destination, System.Action onArrived)
     {
-        waypoints = newWaypoints;
-        currentWaypoint = 0;
-        currentState = PrisonerState.Roaming;
-        MoveToNextWaypoint();
+        while (Vector3.Distance(transform.position, destination) > 0.25f)
+        {
+            transform.position = Vector3.MoveTowards(
+                transform.position, destination, moveSpeed * Time.deltaTime);
+            FaceTarget(destination);
+            yield return null;
+        }
+        transform.position = destination;
+        onArrived?.Invoke();
     }
 
-    private void MoveToNextWaypoint()
+    private void UpdateBubble()
     {
-        if (waypoints == null || currentWaypoint >= waypoints.Length) return;
-        agent.SetDestination(waypoints[currentWaypoint].position);
+        int remaining = handcuffsNeeded - handcuffsReceived;
+        speechBubble?.Show($"x{remaining}");
+    }
+
+    private void FaceTarget(Vector3 target)
+    {
+        Vector3 dir = (target - transform.position); dir.y = 0f;
+        if (dir.sqrMagnitude > 0.001f)
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation, Quaternion.LookRotation(dir), 10f * Time.deltaTime);
     }
 }

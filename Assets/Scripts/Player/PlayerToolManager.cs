@@ -2,17 +2,33 @@ using UnityEngine;
 
 public class PlayerToolManager : MonoBehaviour
 {
-    [Tooltip("0=곡괭이, 1=전동드릴, 2=불도저 모델 오브젝트")]
+    [Tooltip("0=곡괭이, 1=드릴, 2=드릴 차 모델 오브젝트")]
     [SerializeField] private GameObject[] toolModels;
 
     private int currentLevel = 0;
 
-    public int CurrentLevel => currentLevel;
-    public bool IsMaxLevel => currentLevel >= toolModels.Length - 1;
+    public ToolLevel CurrentLevel => (ToolLevel)currentLevel;
+    public int CurrentLevelInt => currentLevel;
+    public bool IsMaxLevel => currentLevel >= 2;
 
     void Start()
     {
         ApplyToolModel(currentLevel);
+    }
+
+    public void SetLevel(int level)
+    {
+        currentLevel = Mathf.Clamp(level, 0, 2);
+        ApplyToolModel(currentLevel);
+
+        // 최대 광석 스택 갱신
+        PlayerStackManager psm = GetComponent<PlayerStackManager>();
+        if (psm != null)
+        {
+            int[] maxStacks = GameManager.Instance.Settings.maxOreStacks;
+            int idx = Mathf.Clamp(currentLevel, 0, maxStacks.Length - 1);
+            psm.SetMaxOreStack(maxStacks[idx]);
+        }
     }
 
     public float GetMiningInterval()
@@ -22,41 +38,17 @@ public class PlayerToolManager : MonoBehaviour
         return s.miningIntervals[idx];
     }
 
-    public int GetUpgradeCost()
+    public int GetMiningWidth()
     {
-        if (IsMaxLevel) return -1;
         GameSettings s = GameManager.Instance.Settings;
-        if (currentLevel < s.toolUpgradeCosts.Length)
-            return s.toolUpgradeCosts[currentLevel];
-        return -1;
-    }
-
-    public bool TryUpgrade()
-    {
-        if (IsMaxLevel) return false;
-
-        int cost = GetUpgradeCost();
-        if (!CurrencyManager.Instance.SpendCash(cost)) return false;
-
-        currentLevel++;
-        ApplyToolModel(currentLevel);
-        return true;
-    }
-
-    // UpgradeZone이 비용을 직접 처리할 때 사용 (비용 재차감 없이 레벨만 올림)
-    public void ForceUpgrade()
-    {
-        if (IsMaxLevel) return;
-        currentLevel++;
-        ApplyToolModel(currentLevel);
+        int idx = Mathf.Clamp(currentLevel, 0, s.miningWidths.Length - 1);
+        return s.miningWidths[idx];
     }
 
     private void ApplyToolModel(int level)
     {
         for (int i = 0; i < toolModels.Length; i++)
-        {
             if (toolModels[i] != null)
                 toolModels[i].SetActive(i == level);
-        }
     }
 }

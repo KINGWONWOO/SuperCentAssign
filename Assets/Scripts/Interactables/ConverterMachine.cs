@@ -2,33 +2,22 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+// 광석 1개 → 수갑 1개, 2초 처리 시간
 public class ConverterMachine : MonoBehaviour
 {
     [SerializeField] private Transform outputPoint;
     [SerializeField] private GameObject handcuffPrefab;
 
-    private float processTime;
-    private int orePerHandcuff;
-    private int maxOutput;
-
-    private int storedOre = 0;
+    private int pendingOre = 0;
     private bool isProcessing = false;
 
     private List<GameObject> outputStack = new List<GameObject>();
 
     public bool HasOutput => outputStack.Count > 0;
 
-    void Start()
-    {
-        GameSettings s = GameManager.Instance.Settings;
-        processTime = s.processTime;
-        orePerHandcuff = s.orePerHandcuff;
-        maxOutput = s.maxConverterOutput;
-    }
-
     public void ReceiveOre(int count = 1)
     {
-        storedOre += count;
+        pendingOre += count;
         if (!isProcessing)
             StartCoroutine(ProcessRoutine());
     }
@@ -39,32 +28,30 @@ public class ConverterMachine : MonoBehaviour
         int last = outputStack.Count - 1;
         GameObject obj = outputStack[last];
         outputStack.RemoveAt(last);
+        if (obj != null) obj.transform.SetParent(null);
         return obj;
     }
 
     private IEnumerator ProcessRoutine()
     {
         isProcessing = true;
+        float processTime = GameManager.Instance.Settings.processTime;
 
-        while (storedOre >= orePerHandcuff)
+        while (pendingOre > 0)
         {
             yield return new WaitForSeconds(processTime);
-
-            if (storedOre < orePerHandcuff) break;
-            if (outputStack.Count >= maxOutput) { yield return null; continue; }
-
-            storedOre -= orePerHandcuff;
-            SpawnOutputItem();
+            pendingOre--;
+            SpawnHandcuff();
         }
 
         isProcessing = false;
     }
 
-    private void SpawnOutputItem()
+    private void SpawnHandcuff()
     {
         if (handcuffPrefab == null || outputPoint == null) return;
 
-        float heightOffset = outputStack.Count * 0.15f;
+        float heightOffset = outputStack.Count * 0.18f;
         Vector3 spawnPos = outputPoint.position + Vector3.up * heightOffset;
         GameObject obj = Instantiate(handcuffPrefab, spawnPos, Quaternion.identity, outputPoint);
         outputStack.Add(obj);

@@ -2,23 +2,22 @@ using UnityEngine;
 using System.Collections;
 
 // Player 오브젝트에 부착.
-// Player에는 CharacterController + Rigidbody(isKinematic=true) + SphereCollider(isTrigger=true)가 함께 있어야
-// OnTriggerEnter/Exit 이벤트가 정상 발동된다.
+// CharacterController + Rigidbody(isKinematic=true) + SphereCollider(isTrigger=true) 필요.
 public class PlayerInteraction : MonoBehaviour
 {
     private PlayerStackManager stackManager;
     private PlayerAnimation playerAnimation;
     private PlayerToolManager toolManager;
 
-    private MiningNode currentMiningNode;
+    private MiningGrid currentMiningGrid;
     private DropZone currentDropZone;
     private UpgradeZone currentUpgradeZone;
-    private ArrestZone currentArrestZone;
+    private DeskZone currentDeskZone;
 
     private Coroutine miningCoroutine;
     private Coroutine dropCoroutine;
     private Coroutine upgradeCoroutine;
-    private Coroutine arrestCoroutine;
+    private Coroutine deskCoroutine;
 
     void Awake()
     {
@@ -29,57 +28,63 @@ public class PlayerInteraction : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        TryStartMining(other.GetComponent<MiningNode>());
+        TryStartMining(other.GetComponent<MiningGrid>());
         TryStartDrop(other.GetComponent<DropZone>());
         TryStartUpgrade(other.GetComponent<UpgradeZone>());
-        TryStartArrest(other.GetComponent<ArrestZone>());
+        TryStartDesk(other.GetComponent<DeskZone>());
     }
 
     void OnTriggerExit(Collider other)
     {
-        if (other.GetComponent<MiningNode>() != null) StopMining();
+        if (other.GetComponent<MiningGrid>() != null) StopMining();
         if (other.GetComponent<DropZone>() != null) StopDrop();
         if (other.GetComponent<UpgradeZone>() != null) StopUpgrade();
-        if (other.GetComponent<ArrestZone>() != null) StopArrest();
+        if (other.GetComponent<DeskZone>() != null) StopDesk();
     }
 
-    // ─── Mining ───────────────────────────────────────────────────
+    // ─── Mining Grid ──────────────────────────────────────────────
 
-    private void TryStartMining(MiningNode node)
+    private void TryStartMining(MiningGrid grid)
     {
-        if (node == null || !node.IsActive) return;
-        currentMiningNode = node;
+        if (grid == null) return;
+        currentMiningGrid = grid;
         if (miningCoroutine != null) StopCoroutine(miningCoroutine);
         miningCoroutine = StartCoroutine(MiningRoutine());
     }
 
     private void StopMining()
     {
-        currentMiningNode = null;
+        currentMiningGrid = null;
         if (miningCoroutine != null) { StopCoroutine(miningCoroutine); miningCoroutine = null; }
         playerAnimation?.SetMining(false);
+        // DrillCar 탑승 모드 해제
+        if (toolManager != null && toolManager.CurrentLevel == ToolLevel.DrillCar)
+            playerAnimation?.SetInVehicle(false);
     }
 
     private IEnumerator MiningRoutine()
     {
-        while (currentMiningNode != null && currentMiningNode.IsActive)
+        bool isDrillCar = toolManager != null && toolManager.CurrentLevel == ToolLevel.DrillCar;
+        if (isDrillCar) playerAnimation?.SetInVehicle(true);
+        else playerAnimation?.SetMining(true);
+
+        while (currentMiningGrid != null)
         {
-            if (stackManager.IsFull)
-            {
-                playerAnimation?.SetMining(false);
-                yield return new WaitForSeconds(0.5f);
-                continue;
-            }
-            playerAnimation?.SetMining(true);
-            currentMiningNode.Mine(stackManager);
+            int width = toolManager != null ? toolManager.GetMiningWidth() : 1;
+            float interval = toolManager != null ? toolManager.GetMiningInterval() : 1f;
 
-            float interval = toolManager != null
-                ? toolManager.GetMiningInterval()
-                : GameManager.Instance.Settings.miningIntervals[0];
+            // 채굴 실행 (스택 가득 찼어도 돌은 사라짐)
+            currentMiningGrid.MineAt(transform.position, width, stackManager);
 
-            yield return new WaitForSeconds(interval);
+            if (interval <= 0f)
+                yield return new WaitForSeconds(0.1f); // 드릴/드릴 차: 0.1s 폴링
+            else
+                yield return new WaitForSeconds(interval);
         }
+
         playerAnimation?.SetMining(false);
+        if (isDrillCar || (toolManager != null && toolManager.CurrentLevel == ToolLevel.DrillCar))
+            playerAnimation?.SetInVehicle(false);
     }
 
     // ─── Drop Zone ────────────────────────────────────────────────
@@ -133,28 +138,29 @@ public class PlayerInteraction : MonoBehaviour
         }
     }
 
-    // ─── Arrest Zone ──────────────────────────────────────────────
+    // ─── Desk Zone ────────────────────────────────────────────────
 
-    private void TryStartArrest(ArrestZone az)
+    private void TryStartDesk(DeskZone dz)
     {
-        if (az == null) return;
-        currentArrestZone = az;
-        if (arrestCoroutine != null) StopCoroutine(arrestCoroutine);
-        arrestCoroutine = StartCoroutine(ArrestRoutine(az));
+        if (dz == null) return;
+        currentDeskZone = dz;
+        if (deskCoroutine != null) StopCoroutine(deskCoroutine);
+        deskCoroutine = StartCoroutine(DeskRoutine(dz));
     }
 
-    private void StopArrest()
+    private void StopDesk()
     {
-        currentArrestZone = null;
-        if (arrestCoroutine != null) { StopCoroutine(arrestCoroutine); arrestCoroutine = null; }
+        currentDeskZone = null;
+        if (deskCoroutine != null) { StopCoroutine(deskCoroutine); deskCoroutine = null; }
     }
 
-    private IEnumerator ArrestRoutine(ArrestZone az)
+    private IEnumerator DeskRoutine(DeskZone dz)
     {
-        while (currentArrestZone == az)
+        float interval = GameManager.Instance.Settings.dropInterval;
+        while (currentDeskZone == dz)
         {
-            az.TryArrest(stackManager);
-            yield return new WaitForSeconds(1f);
+            dz.TransferHandcuff(stackManager);
+            yield return new WaitForSeconds(interval);
         }
     }
 }

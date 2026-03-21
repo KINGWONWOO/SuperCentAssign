@@ -9,38 +9,51 @@ public class PlayerStackManager : MonoBehaviour
     [SerializeField] private float lerpSpeed = 12f;
     [SerializeField] private GameObject maxIndicatorObject;
 
-    private int maxStack = 15;
+    private int maxOreStack = 10;
     private List<StackItem> stackedItems = new List<StackItem>();
 
-    public bool IsFull => stackedItems.Count >= maxStack;
+    // Ore는 maxOreStack 제한, Handcuff/Cash는 무제한
+    public bool IsOreFull => CountOfType(ItemType.Ore) >= maxOreStack;
     public int Count => stackedItems.Count;
 
     void Start()
     {
         if (GameManager.Instance != null)
-            maxStack = GameManager.Instance.Settings.maxStackCount;
+            maxOreStack = GameManager.Instance.Settings.maxOreStacks[0];
         SetMaxIndicator(false);
     }
 
-    public void SetMaxStack(int max)
+    public void SetMaxOreStack(int max)
     {
-        maxStack = max;
+        maxOreStack = max;
+        SetMaxIndicator(IsOreFull);
     }
 
-    public bool AddExistingItem(StackItem existingItem)
+    // Ore 추가 (스택 제한 있음) — 가득 찼어도 false 반환하지 않음. 채굴은 계속되어야 함.
+    // 반환값: 실제로 스택에 추가됐으면 true, 가득 차서 추가 안 됐으면 false
+    public bool AddOre(GameObject orePrefab)
     {
-        if (IsFull) return false;
-        existingItem.transform.SetParent(stackPoint);
-        stackedItems.Add(existingItem);
-        StartCoroutine(LerpToPosition(existingItem.transform, stackedItems.Count - 1));
-        SetMaxIndicator(IsFull);
+        if (IsOreFull)
+        {
+            SetMaxIndicator(true);
+            return false; // 스택에 쌓이지 않지만 광석은 사라짐 (MiningGrid에서 처리)
+        }
+
+        GameObject obj = Instantiate(orePrefab, stackPoint.position, Quaternion.identity);
+        StackItem si = obj.GetComponent<StackItem>();
+        if (si == null) si = obj.AddComponent<StackItem>();
+        si.Initialize(ItemType.Ore);
+
+        obj.transform.SetParent(stackPoint);
+        stackedItems.Add(si);
+        StartCoroutine(LerpToPosition(obj.transform, stackedItems.Count - 1));
+        SetMaxIndicator(IsOreFull);
         return true;
     }
 
+    // Handcuff/Cash 추가 — 무제한
     public bool AddItem(GameObject itemPrefab, ItemType type)
     {
-        if (IsFull) return false;
-
         GameObject obj = Instantiate(itemPrefab, stackPoint.position, Quaternion.identity);
         StackItem si = obj.GetComponent<StackItem>();
         if (si == null) si = obj.AddComponent<StackItem>();
@@ -49,7 +62,15 @@ public class PlayerStackManager : MonoBehaviour
         obj.transform.SetParent(stackPoint);
         stackedItems.Add(si);
         StartCoroutine(LerpToPosition(obj.transform, stackedItems.Count - 1));
-        SetMaxIndicator(IsFull);
+        return true;
+    }
+
+    // 기존 StackItem 오브젝트를 스택에 편입 (ConverterMachine 출력 → 플레이어)
+    public bool AddExistingItem(StackItem existingItem)
+    {
+        existingItem.transform.SetParent(stackPoint);
+        stackedItems.Add(existingItem);
+        StartCoroutine(LerpToPosition(existingItem.transform, stackedItems.Count - 1));
         return true;
     }
 
@@ -64,7 +85,7 @@ public class PlayerStackManager : MonoBehaviour
             stackedItems.RemoveAt(i);
             item.transform.SetParent(null);
             RefreshPositions();
-            SetMaxIndicator(IsFull);
+            SetMaxIndicator(IsOreFull);
             return item;
         }
         return null;
@@ -80,7 +101,7 @@ public class PlayerStackManager : MonoBehaviour
             stackedItems.RemoveAt(i);
             item.transform.SetParent(null);
             RefreshPositions();
-            SetMaxIndicator(IsFull);
+            SetMaxIndicator(IsOreFull);
             return item;
         }
         return null;
@@ -108,10 +129,8 @@ public class PlayerStackManager : MonoBehaviour
     private void RefreshPositions()
     {
         for (int i = 0; i < stackedItems.Count; i++)
-        {
             if (stackedItems[i] != null)
                 StartCoroutine(LerpToPosition(stackedItems[i].transform, i));
-        }
     }
 
     private IEnumerator LerpToPosition(Transform item, int index)
