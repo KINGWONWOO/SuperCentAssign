@@ -2,77 +2,710 @@
 ============================================================
 
 [사용자]
-https://github.com/KINGWONWOO/SuperCentAssign 해당 프로젝트 최초 깃 init 생성해주고 내가 보내준 레포 주소에 첫 커밋 및 푸쉬해줘.
+자동 판매 업그레이드랑 자동 채굴 업그레이드 먹으면 주인공이랑 똑같이 생긴 캐릭터가 생성되서 해당 업무를 할 수 있도록 해줘. 그리고 현재 씬에 구현된 기능이랑 처음에 내가 보낸 기획서 및 영상에서 어느 기능까지 구현됐는 지 정리해서 보내주고 앞으로 해야할 일에 대해서 설명해줘
 
 [Claude]
-`.gitignore`를 만들고 git init 후 첫 커밋 및 푸쉬를 진행할게요.
+먼저 현재 코드 상태와 기획서를 확인할게요.
 
 [Claude]
-스테이징이 완료됐습니다. 첫 커밋을 생성하고 푸쉬할게요.
+現在のシーン構造を把握しました。NPCプレファブを作成して各UpgradeZoneに割り当てるEditorスクリプトを作ります。
 
 [Claude]
-완료됐습니다!
+프리팹이 생성됐습니다. UpgradeZone 연결을 확인해봅니다.
 
-- **git init** 완료
-- **.gitignore** 생성 (Unity URP 프로젝트에 맞게 Library, Temp, Logs 등 제외)
-- **첫 커밋** 생성 (64개 파일, `f4316d1`)
-- **`main` 브랜치로 푸쉬** 완료 → https://github.com/KINGWONWOO/SuperCentAssign
+[Claude]
+비활성화된 오브젝트들에도 프리팹을 직접 할당합니다.
+
+[Claude]
+프리팹 할당 완료. 이제 AutoSellNPC에 스폰 포인트(pickupPoint, deliveryPoint)와 참조가 설정되어야 합니다. 현재 씬에서 관련 오브젝트를 확인하고 연결합니다.
+
+[Claude]
+`AutoSellNPC`가 생성 시 자동으로 씬에서 참조를 찾도록 수정합니다.
+
+[Claude]
+`AutoSellNPC.cs`를 Start()에서 자동으로 씬 참조를 찾도록 업데이트합니다.
+
+[Claude]
+마찬가지로 `WorkerNPC.cs`도 생성 시 miningGrid 자동 탐색하도록 확인합니다.
+
+[Claude]
+씬을 저장합니다.
+
+[Claude]
+이제 커밋하고 구현 현황 정리를 드리겠습니다.
+
+[Claude]
+Push 완료. 이제 전체 구현 현황을 정리해드립니다.
+
+---
+
+## 구현 완료 내용 (NPC 프리팹 관련)
+
+**자동 채굴 업그레이드 (WorkerHire)** → `WorkerNPCPrefab` 생성 및 연결
+- 플레이어와 동일한 파란색 Body+Head 캡슐/구 외형
+- `UpgWorker` 업그레이드 존에 프리팹 할당 완료
+- 업그레이드 구매 시 row별 3명 자동 생성
+
+**자동 판매 업그레이드 (AutoSell)** → `AutoSellNPCPrefab` 생성 및 연결
+- 동일한 외형, `UpgAutoSell` 업그레이드 존에 할당 완료
+- Start()에서 ConverterMachine·DeskManager·픽업존·배달점 자동 탐색 (인스펙터 연결 불필요)
+
+---
+
+## 기획서 vs 현재 구현 현황
+
+### ✅ 구현 완료
+
+| 기획 내용 | 구현 상태 |
+|---|---|
+| 플레이어 조이스틱 이동 + 애니메이션 | ✅ |
+| 채굴 구역 7×20 배치, 돌 부수면 6초 후 리스폰 | ✅ |
+| 채굴 시 등에 돌 쌓기, 10개 MAX 표시 (가득 찬 후도 채굴/소멸 계속) | ✅ |
+| 돌→수갑 변환기 (OreDropZone → ConverterMachine → HandcuffPickupZone) | ✅ |
+| 수갑 픽업, Desk로 가져가면 수갑 판매 | ✅ |
+| 수감자 줄서기 (최대 2명 시스템, Desk 앞 대기 → 뒷줄 대기) | ✅ |
+| 수감자당 수갑 4개 소비, 1개당 $10 돈 생성 | ✅ |
+| 수갑 개수 말풍선 UI | ✅ |
+| 감옥 수용 (20명), No Cell! 말풍선 | ✅ |
+| 드릴 업그레이드 ($20): 3칸 채굴, 딜레이 없음, 최대 스택 20 | ✅ |
+| 드릴 차 업그레이드 ($50): 5칸 채굴, 최대 스택 30 | ✅ |
+| 인력 고용 업그레이드 ($40): WorkerNPC 3명 자동 채굴 | ✅ |
+| 자동 판매 업그레이드 ($50): AutoSellNPC 왕복 판매 | ✅ |
+| 감옥 확장 업그레이드 ($50): 20명 → 100명 | ✅ |
+| 카메라 줌, 빌보드 라벨 | ✅ |
+| 돈 HUD (우상단) | ✅ |
+| 외벽 경계 | ✅ |
+
+---
+
+### ❌ 미구현 / 추가 작업 필요
+
+| 기획 내용 | 상태 |
+|---|---|
+| **NPC 애니메이션** – WorkerNPC/AutoSellNPC가 이동할 때 걷기 애니메이션 없음 (캡슐이 미끄러지듯 이동) | ❌ |
+| **채굴 장비 시각화** – 드릴/드릴차 업그레이드 시 플레이어 모델 변경 (ToolModel_Pickaxe만 있고 Drill/DrillCar 메시 없음) | ❌ |
+| **드릴 차 탑승 모습** – 업그레이드 후 캐릭터가 차량에 탑승한 외형으로 변경 | ❌ |
+| **돈 줍기 자동화** – 현재 MoneyPickupZone에 직접 들어가야 돈이 HUD에 반영됨. 원래 기획은 자동 흡수 방식 | ❌ (현재는 DropZone 트리거 방식) |
+| **수감자 모습 변경** – 수갑 4개 받은 후 감옥으로 이동 시 외형 변화 없음 | ❌ |
+| **감옥 확장 시 침대/프랍 활성화 연출** – 확장 업그레이드 시 비활성화 침대 활성화 + 파티클 | ❌ |
+| **업그레이드 존 선행 조건 잠금 UI** – 현재 비활성화로 보이지 않음. 잠긴 상태 표시 없음 | ❌ |
+| **WorkerNPC 인력 고용 전용 행 할당** – 현재 row 0, 3, 6 하드코딩. 기획서는 "1줄씩 맡아 20칸 왕복" | 부분 구현 |
+| **모바일 최적화 / 오브젝트 풀링** | ❌ |
+
+---
+
+## 앞으로 해야 할 작업 (우선순위 순)
+
+1. **채굴 장비 메시 추가** — 드릴(Drill), 드릴 차(DrillCar) 3D 모델을 Player의 ToolModel 슬롯에 추가하고 레벨에 따라 전환
+2. **NPC 걷기 애니메이션** — WorkerNPC/AutoSellNPC에 Animator + 간단한 걷기 클립 연결 (또는 절차적 보행 표현)
+3. **돈 자동 흡수** — MoneyPickupZone 근처에 있으면 자동으로 돈이 HUD에 더해지도록 변경
+4. **수감자 시각 피드백** — 수갑 4개 획득 후 모습 변화 (색상 전환 등)
+5. **감옥 확장 연출** — 침대 프랍 활성화 + 파티클 이펙트
+6. **업그레이드 잠금 UI** — 선행 조건 미충족 시 "잠금" 표시, 조건 달성 시 팝업 등장
 
 [사용자]
-해당 프로젝트 파일 전체도 커밋해주고 readme도 작성해줘. 앞으로 생기는 모든 변화를 요청할 때 마다 커밋 - 푸쉬해주고 이에 맞춰 리드미도 계속 업데이트해줘
+수정해야할 점.
+
+
+
+1. 수감자 이동 방향 : 수감자가 L자 도로에 맞춰서 이동해야해. 그래서 wait -> desk -> prison 순이 아닌 중간에 경유점을 하나 더 추가해서 wait -> desk -> prisonwait -> prison 순이 되야해. 이때 prison이 가득 차면 prisonwait앞에서 대기하는 건 유지.
+
+2. 자동 판매 속도 변경 : 자동 판매 업그레이드 시 수갑을 들고 내려놓는 속도를 플레이어랑 똑같이 구현해줘.
+
+3. 돈, 수갑, 돈 스택 위치 변경 : 여러 종류의 물건을 플레이어가 들고 있을 시 위치 차별화
+
+4. 자동 채굴 업그레이드 방향 변경 : 자동 채굴 업그레이드 시  : 7행 20열에서 아래 3행을 맡았으면 해. 이 상태에서 20칸을 하나씩 이동하면서 돌이 있으면 채굴 없으면 이동했으면 좋겠어. 따로따로 작동해야할 거 같아. 그리고 이들이 채굴 시 수갑 변환 장치의 돌 부분에 쌓이게 해줘.
 
 [Claude]
-모든 Assets는 이미 커밋되어 있고, 남은 파일들은 `.plastic/`(Plastic SCM 내부 파일)과 `.vsconfig`, `ignore.conf`입니다. `.plastic/`과 `ignore.conf`는 gitignore에 추가하고, `.vsconfig`는 포함시킬게요.
+관련 코드들을 먼저 읽어볼게요.
 
 [Claude]
-이제 README.md를 작성할게요.
+전체 구조 파악 완료. 4가지 수정을 한 번에 진행합니다.
 
 [Claude]
-이제 feedback 메모리에 이 규칙을 저장해둘게요.
+**CellManager** — 감옥 입구 공개 프로퍼티 추가:
 
 [Claude]
-완료됐습니다.
+**PrisonerAI** — desk → 감옥 입구 → cell/대기 L자 경로:
 
-**커밋된 내용:**
-- `README.md` — 프로젝트 개요, 구조, 시작 방법, 변경 이력 포함
-- `.vsconfig` — Visual Studio Unity 워크로드 설정
-- `.gitignore` 업데이트 — `.plastic/`, `ignore.conf` 제외 추가
+[Claude]
+**AutoSellNPC** — 플레이어 드롭 간격과 동일한 속도로 수갑 전달:
 
-**앞으로 매 요청마다:**
-1. 변경사항 커밋 + 푸쉬
-2. README.md 변경 이력 업데이트 + 커밋 + 푸쉬
+[Claude]
+**PlayerStackManager** — 아이템 타입별 스택 위치 분리:
 
-자동으로 진행할게요.
+[Claude]
+**MiningGrid** — 특정 col+row 월드 좌표 공개 메서드 추가:
+
+[Claude]
+**DropZone** — 워커 광석 시각적 스택 + 자동 변환 메서드 추가:
+
+[Claude]
+**WorkerNPC** — 열(column) 기반 순회로 전환, OreDropZone에 광석 전달:
+
+[Claude]
+**UpgradeZone** — SpawnWorkers 열(col) 4, 5, 6 할당:
+
+[Claude]
+컴파일 오류 확인:
+
+[Claude]
+오류 없음. `DropZone.WorkerDeliverOre`에서 ore를 `Destroy` 후에도 `items` 리스트에 남아있는 문제를 체크합니다.
+
+[Claude]
+`WorkerDeliverOre`에서 ore를 destroy할 때 리스트에서도 제거하도록 수정합니다:
+
+[Claude]
+4가지 수정 완료입니다. 변경 내용 요약:
+
+---
+
+### 1. 수감자 L자 경로
+- `PrisonerState.WalkingToPrisonWait` 상태 추가
+- `PrisonerAI.TryGoToCell()` 분리 → desk 처리 후 `CellManager.PrisonEntrance`(outsideQueueStart) 위치까지 먼저 이동, 도착 후 빈 셀이 있으면 입장, 가득 차면 그 앞에서 줄 서기
+
+### 2. 자동 판매 속도
+- `AutoSellNPC` 수갑 전달 루프에 `GameSettings.dropInterval`(0.3초) 간격 추가 → 플레이어가 드롭하는 것과 동일한 속도로 한 개씩 전달
+
+### 3. 아이템 스택 위치
+- `PlayerStackManager.GetLocalStackPosition()` 수정
+  - 돌(Ore): X = -0.28 (왼쪽)
+  - 수갑(Handcuff): X = 0 (중앙)  
+  - 돈(Cash): X = +0.28 (오른쪽)
+  - 각 타입 내에서 높이 방향으로 쌓임
+
+### 4. 자동 채굴 방향
+- `WorkerNPC` 완전 재작성: `assignedRow`(Z행 고정, X방향 이동) → `assignedCol`(X열 고정, Z방향 20칸 왕복)
+- `UpgradeZone.SpawnWorkers()`: row 0,3,6 → col 4,5,6 (7열 중 아래 3열)
+- `MiningGrid.GetNodeWorldPos(col, row)` 추가
+- `DropZone.WorkerDeliverOre()` 추가: OreDropZone에 광석 시각적 스태킹 + 변환기 자동 전달, 변환 완료 후 정리
 
 [사용자]
-main에 있는 걸 201924407에 통합해줘
+수정해야할 점.
+
+
+
+1. 돈 spawn : 돈이 spawner에서 바로 나오는게 아니라. 수감자한테서 날라와서 spawner에 쌓이는 구조로 해줘. 
+
+2. prisonwait 위치 변경 : outsidequeuestart내의 makervis의 위치를 옮겼어 해당 위치로 prisonwait위치로 지정해줘. 그리고 모든 markervis에 맞춰서 수감자의 이동 경로가 수정되도록 구현해줘.
+
+3. 감옥 내 수감자들 쌓이는 모습 : 수감자의 실제 모양과 수감자들이 쌓이는 위치가 맞지 않아. 수정해줘
 
 [Claude]
-`201924407` 브랜치가 없으니 `main`에서 새로 만들어서 푸쉬할게요.
+씬 상태와 관련 오브젝트를 먼저 확인할게요.
 
 [Claude]
-리모트에 이미 `201924407` 브랜치가 있네요. 확인해볼게요.
+구조 파악 완료. 이제 3가지를 순서대로 수정합니다.
+
+**Change 1: 돈이 수감자에서 날아와서 쌓이는 애니메이션**
 
 [Claude]
-두 브랜치가 서로 다른 히스토리를 가지고 있어요. `201924407`에 `main`을 머지할게요.
+**Change 2: 모든 MarkerVis 위치 사용 — PrisonerSpawner, CellManager, PrisonerAI**
 
 [Claude]
-README.md 충돌이 있어요. `main`의 내용으로 덮어쓸게요.
+**PrisonerAI** — `InitializeWithPositions`으로 수정, MarkerVis 기반 경로 수용:
 
 [Claude]
-완료됐습니다.
+**CellManager** — MarkerVis 기반 PrisonEntrance + cellRoot 위치 반영, 수감자 Y 높이 수정:
 
-- `origin/201924407`을 로컬에 받아와서 `origin/main`을 머지
-- README 충돌은 `main` 내용으로 해결
-- `201924407` 브랜치에 푸쉬 완료
+[Claude]
+`PrisonEntrance`가 `Transform`에서 `Vector3`으로 바뀌었으니 PrisonerAI에서 기존 `PrisonEntrance` 참조를 `PrisonEntrancePos`로 통일했는지 확인합니다. 컴파일 체크:
 
-현재 로컬은 `201924407` 브랜치에 있습니다. `main`으로 돌아가고 싶으시면 말씀해 주세요.
+[Claude]
+오류 없음. 이제 수감자 Y 위치도 이동 중에 유지되는지 확인합니다. `PrisonerAI.WalkTo`는 목적지 y좌표를 그대로 사용하므로, 셀 슬롯 y=0.85를 그대로 받아 정상 동작합니다. 씬 저장 후 커밋합니다.
+
+[Claude]
+완료입니다. 변경 내용 요약:
+
+---
+
+### 1. 돈 Spawn 애니메이션
+- 수감자 머리 위에서 돈 오브젝트 생성
+- `moneyFlySpeed`(8 단위/초) + `moneyArcHeight`(1.5) 포물선으로 MoneyPickupZone까지 날아감
+- 도착 후 `PushItem()`으로 스택에 편입 (Inspector에서 속도/높이 조절 가능)
+
+### 2. MarkerVis 기반 경로
+- `GetMarkerPos(Transform t)` 패턴: 마커에 `MarkerVis` 자식이 있으면 그 위치 사용, 없으면 부모 위치 fallback
+- **PrisonerSpawner**: spawn/wait/desk 모두 MarkerVis 반영
+- **CellManager**: `PrisonEntrancePos` = OutsideQueueStart의 MarkerVis (-9.96, 0, -7), `CellGridOrigin` = CellRoot의 MarkerVis (3, 0, -7.21)
+- 앞으로 씬에서 MarkerVis만 이동하면 경로가 자동으로 따라감
+
+### 3. 감옥 내 수감자 위치
+- 셀 슬롯 y = **0.85** (캡슐 반높이) → 수감자가 바닥에 정확히 서도록
+- 그리드 원점을 `CellRoot.MarkerVis (3, 0, -7.21)`로 변경 → 실제 감옥 영역과 정렬
+- 슬롯 방향을 `+Z` 방향으로 통일 (이전 `-row*1.5` → `+row*1.5`)
 
 [사용자]
-너랑 대화했던 프롬프트들 export 할 수 있나? 제출해야해서
+이제 디자인 쪽으로 갈려고 해. 필요한 모델링 명들을 말해주면 내가 생성해서 넣어놓을게 그걸 적용해줘
 
 [Claude]
-대화 로그 파일을 찾았습니다. 읽기 좋은 텍스트 파일로 변환해 드릴게요.
+현재 씬에서 어떤 오브젝트들이 프리미티브로 구성돼 있는지 전부 파악할게요.
 
 [Claude]
-파일이 거의 비어있네요. JSONL 구조를 먼저 확인할게요.
+전체 씬을 파악했습니다. 현재 프리미티브(Capsule/Cube/Sphere)로만 구성된 것들을 카테고리별로 정리해드립니다.
+
+---
+
+## 필요한 모델 목록
+
+### 캐릭터 (3종)
+
+| 파일명 | 설명 | 참고 크기 (Unity units) |
+|---|---|---|
+| `char_police.fbx` | 플레이어 / 자동채굴 NPC / 자동판매 NPC 공용 (색상만 다르게) | 높이 ~1.7, 너비 ~0.7 |
+| `char_prisoner.fbx` | 수감자 (주황 계열) | 높이 ~1.7, 너비 ~0.7 |
+
+> 두 캐릭터 모두 **Pivot을 발 아래(0,0,0)** 에 두어야 바닥에 정확히 서게 됩니다.
+
+---
+
+### 도구 (3종, 플레이어 손/등에 붙음)
+
+| 파일명 | 설명 | 참고 크기 |
+|---|---|---|
+| `tool_pickaxe.fbx` | 곡괭이 (기본 장비) | 길이 ~0.8 |
+| `tool_drill.fbx` | 드릴 (1차 업그레이드) | 길이 ~0.9 |
+| `tool_drillcar.fbx` | 드릴 차량 (2차 업그레이드, 탑승형) | 길이 ~2.0, 너비 ~1.2 |
+
+---
+
+### 인벤토리 아이템 (4종, 등에 쌓임)
+
+| 파일명 | 설명 | 참고 크기 |
+|---|---|---|
+| `item_ore.fbx` | 광석 덩어리 (등에 쌓이는 작은 돌) | ~0.18 × 0.18 × 0.18 |
+| `item_rock.fbx` | 채굴 노드 (그리드에 깔린 큰 돌) | ~0.85 × 0.55 × 0.85 |
+| `item_handcuff.fbx` | 수갑 | ~0.24 × 0.08 × 0.12 |
+| `item_cash.fbx` | 돈다발 | ~0.20 × 0.04 × 0.12 |
+
+---
+
+### 구조물 (5종)
+
+| 파일명 | 설명 | 참고 크기 |
+|---|---|---|
+| `struct_converter.fbx` | 변환기계 (돌→수갑, 컨베이어 벨트 형태) | ~2.0 × 2.0 × 3.0 |
+| `struct_desk.fbx` | 경찰 책상 | ~1.8 × 0.9 × 0.8 |
+| `struct_prison.fbx` | 감옥 건물 (철창 포함, 한 유닛) | ~10 × 3 × 10 |
+| `struct_upgrade_pad.fbx` | 업그레이드 발판 (5종 공용) | ~2.0 × 0.2 × 2.0 |
+| `struct_spawner.fbx` | 수감자 스포너 표시 구조물 | ~1.0 × 1.5 × 1.0 |
+
+---
+
+### 주의사항
+
+- 모든 FBX는 **Y-up, Z-forward** (Unity 기본 방향)
+- **Pivot 위치**: 캐릭터는 발 아래, 나머지는 오브젝트 중심 또는 바닥 중심
+- 텍스처는 별도 이미지 파일 (PNG)로 제공하거나 **SubMesh 분리**로 주면 머티리얼 자동 분리 가능
+- `struct_prison.fbx`는 철창 부분을 별도 SubMesh로 분리해주면 반투명 처리 적용 용이
+
+---
+
+모델 파일들을 `Assets/Models/` 폴더에 넣어주시면 바로 씬에 적용해드리겠습니다. 한꺼번에 줘도 되고, 카테고리별로 나눠서 줘도 됩니다.
+
+[사용자]
+돌 놓는 부분, 수갑 놓는 부분 모양을 바꿀거야. 기존의 것은 지워주고 바닥에 네모 점선 표시로 해줘
+
+[Claude]
+현재 존 구조를 먼저 확인할게요.
+
+[Claude]
+구조 파악 완료. 에디터 스크립트로 기존 시각 요소를 제거하고 점선 테두리를 생성합니다.
+
+[Claude]
+메뉴 실행이 반영이 안 됐네요. exec로 직접 실행합니다.
+
+[Claude]
+Tile·Corner 제거, 점선 생성 확인. 씬 저장 후 커밋합니다.
+
+[Claude]
+완료입니다.
+
+**변경 내용:**
+- **OreDropZone**: 황금색 점선 사각형 (3.5 × 3.0), 기존 Tile + 4개 Corner 제거
+- **HandcuffPickupZone**: 청색 점선 사각형 (4.0 × 2.5), 기존 Tile + 4개 Corner 제거
+- 점선 1개: 길이 0.30 / 간격 0.18 / 두께 0.06 / 높이 0.018 (바닥 위 아주 살짝)
+- 콜라이더는 그대로 유지 (기능 변화 없음)
+
+나중에 점선 색상·크기·간격 조절이 필요하면 `DashedZoneBuilder.cs` 상단 상수값(`DASH_LEN`, `GAP_LEN` 등)만 수정하고 **Game → Rebuild Dashed Zones** 메뉴를 다시 실행하면 됩니다.
+
+[사용자]
+돌 놓는 곳과 책상 앞을 점선으로 만들어줘 둘 다 점선 안에 들어가야 돌이 놓아지고 책상 앞 점선 안에 들어가야 책상 위로 수갑을 놓을 수 있게해줘. 기존에는 둘 다 흰색 점선이다가 들어가서 동작하기 시작하면 녹색 형광색으로 바꿔줘. 나오면 다시 흰색이 되고
+
+[Claude]
+현재 DeskZone과 OreDropZone 동작 방식을 확인할게요.
+
+[Claude]
+전체 구조 파악 완료. `ZoneDashedOutline.cs` 컴포넌트를 만들어 런타임에 점선 생성 + 색상 전환을 처리합니다.
+
+[Claude]
+컴파일 OK. 이제 OreDropZone과 DeskZone에 컴포넌트를 추가합니다.
+
+[Claude]
+컴포넌트 연결 확인. 씬 저장 후 커밋합니다.
+
+[Claude]
+완료입니다.
+
+**동작 방식:**
+- **OreDropZone** (황금색→형광녹색): 플레이어가 들어가면 초록으로 전환, 나오면 흰색으로 복귀. 돌 투입 가능 상태 표시
+- **DeskZone** (흰색→형광녹색): 플레이어가 들어가면 초록으로 전환, 수갑 놓기 가능 상태 표시
+
+**구조:**
+- `ZoneDashedOutline.cs` — BoxCollider 크기를 자동으로 읽어 점선 생성, `OnTriggerEnter/Exit`으로 색상 전환
+- `dashLen`, `gapLen`, `dashW` 등 Inspector에서 조절 가능
+- `idleColor` (흰색) / `activeColor` (형광녹색) Inspector에서 변경 가능
+
+[사용자]
+깃헙 푸쉬 해줘
+
+[Claude]
+푸쉬 완료입니다. 함께 커밋된 내용:
+
+- `SceneBuilder.cs` — 씬 실측 좌표 상수 업데이트
+- `RockNode.cs` — 콜라이더 isTrigger 보장
+- `MoneySpawner.cs` — 미사용 파일 삭제
+- `.meta` 파일들 — 신규 스크립트 메타 추가
+
+[사용자]
+이제 디자인을 적용할려고 해. 아래는 해당 fbx랑 png 위치를 같이 줄테니 이를 참고해서 차례대로 적용해줘. 이때 fbx의 경우 그 안의 폴더에 있는 texture를써줘
+
+
+
+ ./modeling/image
+
+- bullupgrade.png : 불도져 업그레이드를 해당 텍스쳐로 변경.
+
+- drillupgrade.png : 드릴 업그레이드를 해당 텍스쳐로 변경.
+
+- jailupgrade.png : 드릴 업그레이드를 해당 텍스쳐로 변경.
+
+- sellupgrade.png : 자동 판매 업그레이드를 해당 텍스쳐로 변경.
+
+- miningupgrade.png : 자동 채굴 업그레이드를 해당 텍스쳐로 변경.
+
+이때, upgrade_example.png를 참고해서 모든 업그레이드 칸에 업그레이드까지 남은 돈을 ui로 출력해주도록 수정. 텍스트 위치는 해당 png 참고.
+
+이후 업그레이드 칸 네모 뒤에 업그레이드 진행 시 아래에서부터 초록색을 채워서 퍼센트 진행상황 표시 50퍼까지 돈 제출 완료 시. 절반 아래는 초록색 절 반 위는 원래 바닥색으로 구현
+
+- soundonbutton.png / soundoffbutoon.png : 화면 왼쪽 아래에 HUD로 버튼 추가 이 버튼 클릭 시 게임 내 모든 사운드 온/오프 가능. 모든 클릭 시 간단한 애니메이션 및 사운드 작동.
+
+- titleui.png : 왼쪽 위에 hud ui 띄워놓기. 조금씩 커졌다 작아졌다 하는 애니메이션 적용
+
+- moneyui.png : 오른쪽 위에 hud ui. 흰색 네모 칸 안에 현재 돈 량을 표시
+
+[Claude]
+먼저 파일 구조를 파악할게요.
+
+[Claude]
+이미지 확인 완료. 기존 UI 구조도 파악합니다.
+
+[Claude]
+좋습니다. 이제 단계별로 진행합니다.
+
+**Step 1: 이미지 에셋 복사**
+
+[Claude]
+**Step 2: HUD 스크립트 작성 — SoundToggleButton, TitleUI**
+
+[Claude]
+**Step 3: Unity에서 에셋 임포트 → 텍스처 타입을 Sprite로 설정 → 업그레이드 존 재구성**
+
+[Claude]
+9개 스프라이트 임포트 완료. 이제 업그레이드 존을 재구성합니다.
+
+[Claude]
+5개 존 모두 이미지 적용 완료. 이제 CostText를 이미지 아래로 재배치하고 HUD를 구성합니다.
+
+[Claude]
+**Step 4: HUD Canvas 재구성 — 타이틀, 돈 UI, 사운드 버튼**
+
+[Claude]
+씬 저장하고 커밋합니다.
+
+[Claude]
+완료입니다. 적용된 내용 요약:
+
+---
+
+### 업그레이드 존 (5개)
+| 존 | 이미지 |
+|---|---|
+| UpgDrill | drillupgrade.png |
+| UpgDrillCar | bullupgrade.png |
+| UpgWorker | miningupgrade.png |
+| UpgAutoSell | sellupgrade.png |
+| UpgPrison | jailupgrade.png |
+
+- 각 존에 **빌보드 Quad** (1.8×1.8, 카메라를 항상 향함) 위에 이미지 표시
+- **FillBar** 초록색으로 변경, 플랫폼 뒤에서 아래→위로 채워짐 (결제 진행 시)
+- **CostText** 이미지 카드 아래에 재배치
+
+### HUD
+- **왼쪽 위** — `titleui.png` (Prison Life 타이틀), 호흡 애니메이션 (±6% 크기 진동)
+- **오른쪽 위** — `moneyui.png` 배경 + 흰 박스 안에 현재 돈 실시간 표시
+- **왼쪽 아래** — 사운드 버튼 (110×110px), 클릭 시 ON/OFF 이미지 전환 + 펀치 스케일 애니메이션 + `AudioListener.volume` 제어
+
+[사용자]
+각 업그레이드 존이 화면을 향하는게 아닌 바닥에서 위로 보게 해줄래 모두 적용해줘
+
+[사용자]
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   The user is developing a Unity mobile game (Prison Life / SupercentAssignment) — a top-down police/prison management game. Requests across the conversation:
+   - Implement auto-sell and auto-mine upgrades that spawn player-lookalike NPCs
+   - Fix prisoner movement to L-shaped path (wait→desk→prisonwait→prison)
+   - Match AutoSellNPC deposit speed to player's dropInterval
+   - Differentiate stack positions by item type (ore/handcuff/cash)
+   - Change WorkerNPC to traverse 20 rows along assigned column (bottom 3 cols: 4,5,6)
+   - Money should fly from prisoner to money zone with arc animation
+   - All prisoner waypoints use MarkerVis child positions
+   - Fix prisoner Y position in cells (capsule half-height 0.85)
+   - Replace OreDropZone/HandcuffPickupZone visuals with dashed floor outlines
+   - Add interactive dashed outlines to OreDropZone and DeskZone (white→green on enter)
+   - Apply PNG design assets to upgrade zones and HUD
+   - **Final request**: Change upgrade zone image quads from billboard (camera-facing) to floor-facing (flat on floor, facing upward)
+
+2. Key Technical Concepts:
+   - Unity URP (Universal Render Pipeline) - Unlit/Lit shaders
+   - CameraBillboard component (rotates to face camera each LateUpdate)
+   - World-space UI (TextMeshPro 3D, Quads)
+   - Screen-space Canvas UI (TextMeshProUGUI, Image, Button)
+   - SerializedObject/SerializedProperty for editor-time property assignment
+   - Unity Trigger system (OnTriggerEnter/Exit) for zone detection
+   - Coroutines for movement, animations, routines
+   - UpgradeZone fill bar (Y-scale grows from 0 to maxFillHeight)
+   - MarkerVis pattern: child GameObject used as actual waypoint position
+   - unity-cli exec for runtime/editor C# execution
+   - Git workflow: stage → commit → push
+
+3. Files and Code Sections:
+
+   - **Assets/Scripts/NPC/AutoSellNPC.cs**
+     - Auto-finds ConverterMachine, DeskManager, pickupPoint, deliveryPoint in Start()
+     - Delivers handcuffs one-by-one at dropInterval speed
+     ```csharp
+     float dropInterval = GameManager.Instance.Settings.dropInterval;
+     foreach (GameObject hc in carrying) {
+         if (hc != null) { hc.SetActive(true); deskManager.ReceiveHandcuff(hc); }
+         yield return new WaitForSeconds(dropInterval);
+     }
+     ```
+
+   - **Assets/Scripts/NPC/WorkerNPC.cs**
+     - Rewritten: column-based traversal (assignedCol fixed, currentRow 0→19)
+     - Ore goes to OreDropZone via WorkerDeliverOre()
+     ```csharp
+     public void Initialize(MiningGrid grid, int col) {
+         assignedCol = col;
+         // finds OreDropZone by name
+         transform.position = miningGrid.GetNodeWorldPos(assignedCol, 0);
+         StartCoroutine(WorkRoutine());
+     }
+     ```
+
+   - **Assets/Scripts/NPC/PrisonerAI.cs**
+     - Replaced Transform-based Initialize with Vector3-based InitializeWithPositions
+     - L-shaped path: after desk → walk to PrisonEntrancePos → AssignCellOrQueue
+     ```csharp
+     public void InitializeWithPositions(Vector3 waitPos, Vector3 deskWorldPos,
+         DeskManager desk, CellManager cell, PrisonerSpawner spawner)
+     public void AdvanceToDesk(Vector3 targetDeskPos)
+     private void TryGoToCell() // walks to cellManager.PrisonEntrancePos first
+     ```
+
+   - **Assets/Scripts/NPC/PrisonerSpawner.cs**
+     - GetMarkerPos(Transform t): returns t.Find("MarkerVis")?.position ?? t.position
+     - Uses InitializeWithPositions() instead of Initialize()
+     - Queue positions calculated from MarkerVis of waitPosition
+
+   - **Assets/Scripts/NPC/CellManager.cs**
+     - PrisonEntrancePos: outsideQueueStart.Find("MarkerVis")?.position
+     - CellGridOrigin: cellRoot.Find("MarkerVis")?.position
+     - Cell slots at PRISONER_Y_OFFSET = 0.85f
+     - Grid direction changed to +Z (row * 1.5f instead of -row * 1.5f)
+
+   - **Assets/Scripts/Interactables/DeskManager.cs**
+     - Money spawns at prisoner head (prisoner.transform.position + Vector3.up * 1.5f)
+     - Arc animation flies to MoneyPickupZone
+     ```csharp
+     private IEnumerator FlyToZone(GameObject obj, Vector3 from) {
+         float t = 0f;
+         while (elapsed < duration) {
+             Vector3 flat = Vector3.Lerp(from, to, t);
+             flat.y += moneyArcHeight * Mathf.Sin(t * Mathf.PI);
+             obj.transform.position = flat;
+         }
+         moneyPickupZone.PushItem(obj);
+     }
+     ```
+
+   - **Assets/Scripts/Interactables/DropZone.cs**
+     - Added WorkerDeliverOre(GameObject orePrefab): PushItem + ReceiveOre + timed Destroy
+     - RemoveAfterDelay coroutine cleans up from items list
+
+   - **Assets/Scripts/Interactables/UpgradeZone.cs**
+     - SpawnWorkers: changed from rows {0,3,6} to cols {4,5,6}
+     - Uses miningGrid.GetNodeWorldPos(cols[i], 0)
+
+   - **Assets/Scripts/Interactables/MiningGrid.cs**
+     - Added: `public Vector3 GetNodeWorldPos(int col, int row) => GridToWorld(col, row);`
+
+   - **Assets/Scripts/Player/PlayerStackManager.cs**
+     - GetLocalStackPosition now differentiates by item type:
+       - Ore: baseX = -0.28f
+       - Handcuff: baseX = 0.00f
+       - Cash: baseX = +0.28f
+
+   - **Assets/Scripts/Interactables/ZoneDashedOutline.cs** (NEW)
+     - Builds dashed border at runtime from BoxCollider size
+     - OnTriggerEnter/Exit: white → fluorescent green color change
+     - Added to OreDropZone and DeskZone
+
+   - **Assets/Editor/DashedZoneBuilder.cs** (NEW)
+     - Menu: Game → Rebuild Dashed Zones
+     - Replaces Tile/Corner children with dashed cube segments
+     - OreDropZone: yellow-gold; HandcuffPickupZone: cyan-blue
+
+   - **Assets/Editor/NpcPrefabBuilder.cs** (NEW)
+     - Menu: Game → Build NPC Prefabs
+     - Creates WorkerNPCPrefab and AutoSellNPCPrefab (blue capsule + sphere head)
+
+   - **Assets/Scripts/UI/SoundToggleButton.cs** (NEW)
+     - Toggle AudioListener.volume, swap sprites, punch scale animation
+
+   - **Assets/Scripts/UI/TitleUI.cs** (NEW)
+     - Breathing scale: `float s = 1f + Mathf.Sin(Time.time * breatheSpeed * Mathf.PI) * breatheAmount;`
+
+   - **Assets/Textures/UI/** (NEW folder)
+     - drillupgrade.png, bullupgrade.png, miningupgrade.png, sellupgrade.png, jailupgrade.png
+     - soundonbutton.png, soundoffbutton.png, titleui.png, moneyui.png
+     - All imported as Sprite type with alphaIsTransparency
+
+   - **Scene: GameScene.unity**
+     - UpgradeZones: ArrowShaft/ArrowHead removed; UpgradeImage Quad added with CameraBillboard + PNG texture; FillBar made green
+     - HUD Canvas: TitleUI (top-left), MoneyUI (top-right with CashText TMP), SoundButton (bottom-left)
+     - OreDropZone, DeskZone: ZoneDashedOutline component added
+     - OreDropZone, HandcuffPickupZone: static DashedBorder children
+
+4. Errors and fixes:
+   - **System.Type.GetType("ZoneDashedOutline") returning null**: Fixed by searching all AppDomain assemblies in a foreach loop
+   - **"There is no RectTransform attached to SoundButton"**: Fixed by adding Image component first (which auto-creates RectTransform), then setting RectTransform properties
+   - **"execute_csharp failed: Exception has been thrown"** when building HUD in one exec call: Fixed by splitting into separate exec calls per HUD element (TitleUI, MoneyUI, SoundButton separately)
+   - **UpgradeZone exec failing with ZoneDashedOutline name**: Used reflection `AppDomain.CurrentDomain.GetAssemblies()` pattern consistently
+
+5. Problem Solving:
+   - MarkerVis pattern: Designer moves child object named "MarkerVis" in scene editor; code reads its position instead of parent. Implemented via static `GetMarkerPos(Transform t)` helper.
+   - WorkerNPC ore delivery: DropZone.WorkerDeliverOre() both visually stacks ore AND triggers ConverterMachine.ReceiveOre(), with timed cleanup via coroutine.
+   - Upgrade zone FillBar: maxFillHeight changed to 1.8f to match new 1.8×1.8 image card size.
+
+6. All user messages:
+   - "자동 판매 업그레이드랑 자동 채굴 업그레이드 먹으면 주인공이랑 똑같이 생긴 캐릭터가 생성되서 해당 업무를 할 수 있도록 해줘. 그리고 현재 씬에 구현된 기능이랑 처음에 내가 보낸 기획서 및 영상에서 어느 기능까지 구현됐는 지 정리해서 보내주고 앞으로 해야할 일에 대해서 설명해줘"
+   - "수정해야할 점. 1. 수감자 이동 방향 [L자 경로] 2. 자동 판매 속도 변경 3. 돈, 수갑, 돈 스택 위치 변경 4. 자동 채굴 업그레이드 방향 변경"
+   - "수정해야할 점. 1. 돈 spawn [수감자에서 날아오기] 2. prisonwait 위치 변경 [MarkerVis 기반] 3. 감옥 내 수감자들 쌓이는 모습"
+   - "이제 디자인 쪽으로 갈려고 해. 필요한 모델링 명들을 말해주면 내가 생성해서 넣어놓을게 그걸 적용해줘"
+   - "돌 놓는 부분, 수갑 놓는 부분 모양을 바꿀거야. 기존의 것은 지워주고 바닥에 네모 점선 표시로 해줘"
+   - "돌 놓는 곳과 책상 앞을 점선으로 만들어줘 둘 다 점선 안에 들어가야 돌이 놓아지고 책상 앞 점선 안에 들어가야 책상 위로 수갑을 놓을 수 있게해줘. 기존에는 둘 다 흰색 점선이다가 들어가서 동작하기 시작하면 녹색 형광색으로 바꿔줘. 나오면 다시 흰색이 되고"
+   - "깃헙 푸쉬 해줘"
+   - "이제 디자인을 적용할려고 해. 아래는 해당 fbx랑 png 위치를 같이 줄테니 이를 참고해서 차례대로 적용해줘. [upgrade PNGs, sound button, title UI, money UI 상세 요구사항]"
+   - "각 업그레이드 존이 화면을 향하는게 아닌 바닥에서 위로 보게 해줄래 모두 적용해줘"
+
+7. Pending Tasks:
+   - **Current**: Change upgrade zone UpgradeImage Quads from billboard (camera-facing) to floor-facing (flat on ground, facing upward/Y-up). This means removing CameraBillboard component and setting rotation to face up (localEulerAngles = (90, 0, 0) so the quad lies flat on the floor looking up).
+
+8. Current Work:
+   The most recent completed work was applying UI design assets to the upgrade zones and HUD canvas. Five upgrade zones received billboard Quads with PNG textures (drill/bull/mining/sell/jail upgrade images). The HUD canvas was rebuilt with TitleUI (top-left, breathing animation), MoneyUI (top-right, money icon + cash text), and SoundButton (bottom-left, on/off toggle).
+
+   The user's final request before the summary was: "각 업그레이드 존이 화면을 향하는게 아닌 바닥에서 위로 보게 해줄래 모두 적용해줘"
+
+   This means the UpgradeImage Quads on each UpgradeZone should NOT use CameraBillboard (which makes them face the camera), but instead lie flat on the ground facing upward (like a floor sticker/decal).
+
+9. Optional Next Step:
+   Execute the following change for all 5 UpgradeZones:
+   - Find each UpgradeZone's "UpgradeImage" child
+   - Remove the CameraBillboard component
+   - Set localRotation to Quaternion.Euler(90, 0, 0) so the Quad faces upward (lying flat on floor)
+   - Adjust localPosition Y to be just above the platform (e.g., y = -0.43f, just above Platform at y=-0.50)
+   - Keep the scale at (1.8, 1.8, 1.8)
+
+   Direct quote from user: "각 업그레이드 존이 화면을 향하는게 아닌 바닥에서 위로 보게 해줄래 모두 적용해줘"
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: C:\Users\qudtn\.claude\projects\E--unityProject-SupercentAssignment\16fa5fa6-9d9c-41c7-8e51-413cb22a6736.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+[Claude]
+Only one zone updated. Let me check the others.
+
+[Claude]
+Only one UpgradeZone is loaded. Let me check the scene for all upgrade-related GameObjects.
+
+[Claude]
+Only UpgDrill exists in the scene. Let me check the SceneBuilder to see how the other upgrade zones should be built.
+
+[Claude]
+UpgDrill's UpgradeImage is already updated — CameraBillboard removed, rotation set to (90, 0, 0) so it lies flat on the floor facing up, positioned at y=-0.43 just above the platform.
+
+Since only UpgDrill exists in the scene currently, also update the SceneBuilder so future zones are built correctly (floor-facing instead of billboard):
+
+[Claude]
+Now let me find the UpgradeImage quad creation code in SceneBuilder to update it:
+
+[Claude]
+UpgDrill's UpgradeImage is already floor-facing. Now let me also update the SceneBuilder's `BuildUpgradeZone` so future rebuilds create floor-facing images. First, let me check if it has any UpgradeImage creation code, then add it:
+
+[Claude]
+I need to check what texture path/name maps to each upgrade zone type. Let me check the existing textures and how the UpgDrill image was set:
+
+[Claude]
+Now I'll update SceneBuilder to include floor-facing UpgradeImage quad creation for future rebuilds:
+
+[Claude]
+Now update the call sites in `BuildUpgradeZones` to pass texture names:
+
+[Claude]
+Now save the scene and verify compilation:
+
+[Claude]
+No errors. Now commit and push:
+
+[Claude]
+완료했습니다.
+
+- **UpgDrill의 UpgradeImage**: CameraBillboard 제거, `localRotation = (90, 0, 0)` 적용 → 바닥에 눕혀서 위로 보는 형태
+- **SceneBuilder** 업데이트: `BuildUpgradeZone`에 `textureName` 파라미터 추가, 씬 재빌드 시 5개 존 모두 floor-facing 이미지로 생성 (drillupgrade/bullupgrade/miningupgrade/sellupgrade/jailupgrade)
+- 커밋 및 푸시 완료
+
+[사용자]
+이미지가 생겼으니 아래 원래 플랫폼들은 없애주고 fillbar는 그림보다 아래 바닥보다는 위로 가게 해서 그림이 보이도록 해주고, 텍스트도 내가 현재 씬에 드릴에 배치한 거 참고해서 전부 수정해줨
+
+[Claude]
+UpgDrill이 레퍼런스입니다 — Platform 없음, FillBar가 바닥에 납작하게, CostText가 90° 눕혀져 있습니다. 나머지 4개 존도 동일하게 적용하고, FillBar가 수직으로 자라는 대신 바닥 위에서 Z방향(앞→뒤)으로 차오르도록 UpgradeZone.cs도 수정하겠습니다.
+
+[Claude]
+이제 4개 비활성 존에서 Platform 제거하고 FillBar/CostText/UpgradeImage 위치 + 회전을 UpgDrill 레퍼런스에 맞게 수정합니다:
+
+[Claude]
+이제 UpgDrill의 FillBar도 새 로직에 맞게 초기화값 맞추고, ArrowShaft/ArrowHead가 남아 있다면 제거합니다:
+
+[Claude]
+SceneBuilder도 Platform / ArrowShaft / ArrowHead 생성 코드를 제거하고 FillBar 초기 위치를 새 값으로 업데이트합니다:
+
+[Claude]
+변경사항 검증하고 저장합니다:
+
+[Claude]
+완료했습니다.
+
+**변경 내용:**
+
+| 항목 | 변경 |
+|------|------|
+| Platform | 5개 존 전부 제거 |
+| ArrowShaft / ArrowHead | 제거 |
+| FillBar | y=-0.441 (이미지 y=-0.43보다 아래), 두께 0.005, Z방향으로 차오름 (뒤→앞 슬라이드) |
+| CostText | (0.31, -0.43, -0.61), rot=(90,0,0) — UpgDrill 레퍼런스 그대로 |
+| UpgradeImage | 5개 존 모두 (0, -0.43, 0), rot=(90,0,0) 바닥 눕힘 |
+
+FillBar는 이제 수직으로 솟지 않고 이미지 아래에서 Z방향으로 앞쪽을 향해 채워지는 방식으로 동작합니다.
