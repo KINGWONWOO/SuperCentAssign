@@ -12,7 +12,7 @@ public class UpgradeZone : MonoBehaviour
 
     [Header("Visual Fill Bar")]
     [SerializeField] private Transform fillBar;
-    [SerializeField] private float maxFillHeight = 4f;
+    [SerializeField] private float maxFillHeight = 1.8f;  // 이미지 크기에 맞춘 Z 방향 최대 길이
 
     [Header("References")]
     [SerializeField] private MiningGrid miningGrid;
@@ -172,17 +172,21 @@ public class UpgradeZone : MonoBehaviour
     {
         if (fillBar == null) return;
         Vector3 sc = fillBar.localScale;
-        fillBar.localScale = new Vector3(sc.x, 0.001f, sc.z);
-        fillBar.localPosition = new Vector3(fillBar.localPosition.x, 0f, fillBar.localPosition.z);
+        // 바닥 위 납작한 슬랩: X=이미지폭, Y=매우 얇게, Z=0 (빈 상태)
+        fillBar.localScale = new Vector3(sc.x, 0.005f, 0f);
+        fillBar.localPosition = new Vector3(fillBar.localPosition.x,
+                                             fillBar.localPosition.y,
+                                             -maxFillHeight * 0.5f);
     }
 
     private void SetFillBarFull()
     {
         if (fillBar == null) return;
         Vector3 sc = fillBar.localScale;
-        fillBar.localScale = new Vector3(sc.x, maxFillHeight, sc.z);
-        fillBar.localPosition = new Vector3(
-            fillBar.localPosition.x, maxFillHeight * 0.5f, fillBar.localPosition.z);
+        fillBar.localScale = new Vector3(sc.x, 0.005f, maxFillHeight);
+        fillBar.localPosition = new Vector3(fillBar.localPosition.x,
+                                             fillBar.localPosition.y,
+                                             0f);
     }
 
     private void RefreshUI()
@@ -196,10 +200,12 @@ public class UpgradeZone : MonoBehaviour
     {
         if (fillBar == null || requiredCost <= 0) return;
         float ratio = Mathf.Clamp01((float)paidAmount / requiredCost);
-        float newHeight = Mathf.Max(ratio * maxFillHeight, 0.001f);
+        float newLen = Mathf.Max(ratio * maxFillHeight, 0.001f);
         Vector3 sc = fillBar.localScale;
-        fillBar.localScale = new Vector3(sc.x, newHeight, sc.z);
-        fillBar.localPosition = new Vector3(
-            fillBar.localPosition.x, newHeight * 0.5f, fillBar.localPosition.z);
+        // Z 방향으로 차오름 (뒤→앞), 피벗이 중앙이므로 position.z 보정
+        fillBar.localScale = new Vector3(sc.x, 0.005f, newLen);
+        fillBar.localPosition = new Vector3(fillBar.localPosition.x,
+                                             fillBar.localPosition.y,
+                                             -maxFillHeight * 0.5f + newLen * 0.5f);
     }
 }

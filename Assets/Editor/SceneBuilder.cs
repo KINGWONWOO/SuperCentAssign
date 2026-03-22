@@ -799,28 +799,17 @@ public static class SceneBuilder
         bc.isTrigger = true;
         bc.size = new Vector3(2.2f, 2f, 2.2f);
 
-        MakeChildCube(obj, "Platform",
-            new Vector3(0f, -0.5f, 0f),
-            new Vector3(2.2f, 0.12f, 2.2f), color)
-            .GetComponent<Collider>().enabled = false;
-
-        MakeChildCube(obj, "ArrowShaft",
-            new Vector3(0f, -0.46f, 0f),
-            new Vector3(0.35f, 0.12f, 1.0f), Color.white)
-            .GetComponent<Collider>().enabled = false;
-        MakeChildCube(obj, "ArrowHead",
-            new Vector3(0f, -0.44f, 0.55f),
-            new Vector3(0.8f, 0.12f, 0.4f), Color.white)
-            .GetComponent<Collider>().enabled = false;
-
+        // FillBar: 바닥 위 납작한 슬랩, Z 방향으로 차오름
         var fillBar = MakeChildCube(obj, "FillBar",
-            new Vector3(1.3f, 0f, 0f),
-            new Vector3(0.3f, 0.001f, 0.3f), Color.green);
+            new Vector3(0f, -0.441f, 0f),
+            new Vector3(1.8f, 0.005f, 0f), Color.green);
         fillBar.GetComponent<Collider>().enabled = false;
 
+        // CostText: 바닥에 눕혀서 위로 보이도록 (90° 회전)
         var textObj = new GameObject("CostText");
         textObj.transform.SetParent(obj.transform);
-        textObj.transform.localPosition = new Vector3(0f, 1.5f, 0f);
+        textObj.transform.localPosition = new Vector3(0.31f, -0.43f, -0.61f);
+        textObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
         var tmp = textObj.AddComponent<TMPro.TextMeshPro>();
         tmp.text = label;
         tmp.fontSize = 3f;
