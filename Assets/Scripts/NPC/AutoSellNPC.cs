@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 // 자동 판매 NPC. ConverterMachine에서 수갑 10개를 가져와 DeskManager로 전달.
+// 프리팹에서 인스턴스화될 때 참조가 없으면 Start()에서 씬에서 자동 탐색.
 public class AutoSellNPC : MonoBehaviour
 {
     [SerializeField] private ConverterMachine converterMachine;
@@ -16,6 +17,31 @@ public class AutoSellNPC : MonoBehaviour
 
     void Start()
     {
+        // 씬에서 자동 탐색 (프리팹에서 생성 시 참조 미할당 상태를 처리)
+        if (converterMachine == null)
+            converterMachine = FindObjectOfType<ConverterMachine>();
+        if (deskManager == null)
+            deskManager = FindObjectOfType<DeskManager>();
+
+        // pickupPoint: HandcuffPickupZone 위치
+        if (pickupPoint == null)
+        {
+            var pickupZone = GameObject.Find("HandcuffPickupZone");
+            if (pickupZone != null) pickupPoint = pickupZone.transform;
+        }
+        // deliveryPoint: DeskManager 또는 PoliceDeskArea
+        if (deliveryPoint == null)
+        {
+            var deskObj = GameObject.Find("DeskManager") ?? GameObject.Find("PoliceDeskArea");
+            if (deskObj != null) deliveryPoint = deskObj.transform;
+        }
+
+        if (converterMachine == null || deskManager == null || pickupPoint == null || deliveryPoint == null)
+        {
+            Debug.LogError("[AutoSellNPC] 필수 참조 탐색 실패 – 씬 오브젝트를 확인하세요.");
+            return;
+        }
+
         GameSettings s = GameManager.Instance.Settings;
         moveSpeed = s.autoSellMoveSpeed;
         batchSize = s.autoSellBatchSize;
