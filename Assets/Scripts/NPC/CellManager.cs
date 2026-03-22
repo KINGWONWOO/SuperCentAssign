@@ -18,6 +18,9 @@ public class CellManager : MonoBehaviour
 
     public bool IsFull => prisonersInCell.Count >= capacity;
 
+    // 감옥 입구 경유 포인트 (L자 경로용) — outsideQueueStart 앞
+    public Transform PrisonEntrance => outsideQueueStart;
+
     void Start()
     {
         capacity = GameManager.Instance.Settings.defaultCellCapacity;

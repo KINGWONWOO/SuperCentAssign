@@ -154,10 +154,25 @@ public class PlayerStackManager : MonoBehaviour
 
     private Vector3 GetLocalStackPosition(int index)
     {
-        int itemsPerRow = 3;
-        int layer = index / itemsPerRow;
-        int posInRow = index % itemsPerRow;
-        float xOffset = (posInRow - 1) * 0.2f;
-        return new Vector3(xOffset, layer * itemSpacingY, 0f);
+        // 전체 스택에서 타입별 인덱스를 구해 타입마다 다른 X 오프셋에 쌓음
+        StackItem item = index < stackedItems.Count ? stackedItems[index] : null;
+        ItemType type = item != null ? item.ItemType : ItemType.Ore;
+
+        // 타입별 베이스 X 오프셋 (돌=왼쪽, 수갑=중앙, 돈=오른쪽)
+        float baseX = type switch
+        {
+            ItemType.Ore      => -0.28f,
+            ItemType.Handcuff =>  0.00f,
+            ItemType.Cash     =>  0.28f,
+            _                 =>  0.00f
+        };
+
+        // 같은 타입 내에서의 인덱스 (층 계산용)
+        int sameTypeCount = 0;
+        for (int i = 0; i < index; i++)
+            if (stackedItems[i] != null && stackedItems[i].ItemType == type)
+                sameTypeCount++;
+
+        return new Vector3(baseX, sameTypeCount * itemSpacingY, 0f);
     }
 }

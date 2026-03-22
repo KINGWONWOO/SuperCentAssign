@@ -27,6 +27,36 @@ public class DropZone : MonoBehaviour
         items.Add(obj);
     }
 
+    // 워커 NPC가 채굴한 광석을 이 존에 시각적으로 쌓고 변환기로 전달
+    public void WorkerDeliverOre(GameObject orePrefab)
+    {
+        if (zoneType != DropZoneType.OreToConverter || converterMachine == null || orePrefab == null) return;
+
+        GameObject ore = Instantiate(orePrefab, (stackRoot != null ? stackRoot : transform).position, Quaternion.identity);
+        PushItem(ore);
+        converterMachine.ReceiveOre(1);
+
+        // 변환 완료 후 리스트에서 제거 + 오브젝트 파괴
+        float destroyDelay = GameManager.Instance != null
+            ? GameManager.Instance.Settings.processTime + 0.3f
+            : 2.5f;
+        StartCoroutine(RemoveAfterDelay(ore, destroyDelay));
+    }
+
+    private System.Collections.IEnumerator RemoveAfterDelay(GameObject obj, float delay)
+    {
+        yield return new UnityEngine.WaitForSeconds(delay);
+        if (obj != null)
+        {
+            items.Remove(obj);
+            Destroy(obj);
+            // 남은 아이템 위치 재정렬
+            for (int i = 0; i < items.Count; i++)
+                if (items[i] != null)
+                    items[i].transform.localPosition = new Vector3(0f, i * stackSpacingY, 0f);
+        }
+    }
+
     // AutoSellNPC 등 외부에서 직접 꺼낼 때 사용
     public GameObject TakeItem()
     {
@@ -67,5 +97,10 @@ public class DropZone : MonoBehaviour
         if (si == null) si = obj.AddComponent<StackItem>();
         si.Initialize(type);
         stackManager.AddExistingItem(si);
+
+        // 돈을 주울 때 CurrencyManager에 현금 추가 (HUD 반영)
+        if (type == ItemType.Cash)
+            CurrencyManager.Instance?.AddCash(
+                GameManager.Instance.Settings.cashPerHandcuff);
     }
 }

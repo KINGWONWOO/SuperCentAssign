@@ -69,7 +69,8 @@ public class AutoSellNPC : MonoBehaviour
             // Delivery 위치로 이동
             yield return StartCoroutine(WalkTo(deliveryPoint.position));
 
-            // 수갑 전달
+            // 수갑을 플레이어와 동일한 dropInterval 간격으로 한 개씩 전달
+            float dropInterval = GameManager.Instance.Settings.dropInterval;
             foreach (GameObject hc in carrying)
             {
                 if (hc != null)
@@ -77,6 +78,7 @@ public class AutoSellNPC : MonoBehaviour
                     hc.SetActive(true);
                     deskManager.ReceiveHandcuff(hc);
                 }
+                yield return new WaitForSeconds(dropInterval);
             }
             carrying.Clear();
         }

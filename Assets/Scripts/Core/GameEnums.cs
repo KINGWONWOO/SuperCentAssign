@@ -8,6 +8,7 @@ public enum PrisonerState
     WaitingBehindDesk,
     AtDesk,
     FullyProcessed,
+    WalkingToPrisonWait,  // desk 처리 후 감옥 입구 경유
     WalkingToCell,
     InCell,
     WaitingOutsideCell

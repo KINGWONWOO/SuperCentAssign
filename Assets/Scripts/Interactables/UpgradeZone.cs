@@ -34,6 +34,8 @@ public class UpgradeZone : MonoBehaviour
     private int paidAmount = 0;
     private int requiredCost;
     private bool upgradeCompleted = false;
+    private float lastContributeTime = -999f;
+    private const float contributeInterval = 0.5f;
 
     void Start()
     {
@@ -61,6 +63,7 @@ public class UpgradeZone : MonoBehaviour
         if (upgradeCompleted) return;
         if (!MeetsPrerequisite(toolManager)) return;
         if (!stackManager.HasItemOfType(ItemType.Cash)) return;
+        if (Time.time - lastContributeTime < contributeInterval) return;
 
         if (paidAmount >= requiredCost)
         {
@@ -76,6 +79,7 @@ public class UpgradeZone : MonoBehaviour
         Destroy(cashItem.gameObject);
 
         paidAmount += cashValue;
+        lastContributeTime = Time.time;
         RefreshUI();
         RefreshFillBar();
 
@@ -125,25 +129,34 @@ public class UpgradeZone : MonoBehaviour
         foreach (var obj in objectsToActivateOnComplete)
             if (obj != null) obj.SetActive(true);
 
+        // 업그레이드 완료 → 발판 비활성화 (잠시 "DONE!" 보여준 뒤 사라짐)
         if (costText != null) costText.text = "DONE!";
         SetFillBarFull();
+        StartCoroutine(HideAfterDelay(1.2f));
+    }
+
+    private System.Collections.IEnumerator HideAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        gameObject.SetActive(false);
     }
 
     private void SpawnWorkers()
     {
         if (workerNpcPrefab == null || miningGrid == null) return;
 
-        int[] rows = { 0, 3, 6 };
+        // 7열 그리드에서 아래쪽 3열(col 4, 5, 6)을 각 워커가 담당
+        int[] cols = { 4, 5, 6 };
         for (int i = 0; i < 3; i++)
         {
             Vector3 spawnPos = workerSpawnPoints != null && i < workerSpawnPoints.Length
                 ? workerSpawnPoints[i].position
-                : miningGrid.GetRowStartWorld(rows[i]);
+                : miningGrid.GetNodeWorldPos(cols[i], 0);
 
             GameObject obj = Instantiate(workerNpcPrefab, spawnPos, Quaternion.identity);
             WorkerNPC w = obj.GetComponent<WorkerNPC>();
             if (w == null) w = obj.AddComponent<WorkerNPC>();
-            w.Initialize(miningGrid, rows[i]);
+            w.Initialize(miningGrid, cols[i]);
         }
     }
 

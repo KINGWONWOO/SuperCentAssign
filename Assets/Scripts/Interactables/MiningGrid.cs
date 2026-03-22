@@ -99,6 +99,9 @@ public class MiningGrid : MonoBehaviour
     public Vector3 GetRowStartWorld(int row) => GridToWorld(0, row);
     public Vector3 GetRowEndWorld(int row)   => GridToWorld(columns - 1, row);
 
+    // 특정 (col, row) 노드의 월드 좌표
+    public Vector3 GetNodeWorldPos(int col, int row) => GridToWorld(col, row);
+
     public int Rows    => rows;
     public int Columns => columns;
 

@@ -1,30 +1,47 @@
 using UnityEngine;
 using System.Collections;
 
-// 자동 채굴 NPC. 지정된 행을 왕복하며 앞 한 칸에 돌이 있으면 채굴.
-// 채굴된 광석은 플레이어 스택이 아닌 ConverterMachine으로 직접 전달.
+// 자동 채굴 NPC. 지정된 열(X)을 고정하고 20개 행(Z)을 왕복하며 채굴.
+// 채굴된 광석은 OreDropZone(돌 투입구)에 시각적으로 쌓이고 변환기로 자동 전달.
 public class WorkerNPC : MonoBehaviour
 {
     private MiningGrid miningGrid;
-    private ConverterMachine converter;
-    private int assignedRow;
+    private DropZone oreDropZone;     // 돌 투입구 (OreToConverter 타입)
+    private int assignedCol;          // 고정 열(X) 인덱스
     private float moveSpeed;
     private float mineInterval;
 
-    private bool movingForward = true;
-    private int currentCol = 0;
+    private bool movingForward = true; // true = row 0→max, false = row max→0
+    private int currentRow = 0;
 
-    public void Initialize(MiningGrid grid, int row)
+    public void Initialize(MiningGrid grid, int col)
     {
-        miningGrid = grid;
-        assignedRow = row;
-        converter = FindObjectOfType<ConverterMachine>();
+        miningGrid   = grid;
+        assignedCol  = col;
+
+        // OreDropZone 자동 탐색
+        foreach (var dz in FindObjectsOfType<DropZone>())
+        {
+            // OreToConverter 타입인 DropZone 찾기 (내부 필드 접근 대신 이름 기반)
+            if (dz.gameObject.name.ToLower().Contains("ore") ||
+                dz.gameObject.name.ToLower().Contains("drop"))
+            {
+                oreDropZone = dz;
+                break;
+            }
+        }
+        // 이름 기반 탐색 실패 시 GameObject.Find 시도
+        if (oreDropZone == null)
+        {
+            var go = GameObject.Find("OreDropZone");
+            if (go != null) oreDropZone = go.GetComponent<DropZone>();
+        }
 
         GameSettings s = GameManager.Instance.Settings;
-        moveSpeed = s.workerMoveSpeed;
+        moveSpeed    = s.workerMoveSpeed;
         mineInterval = s.workerMineInterval;
 
-        transform.position = grid.GetRowStartWorld(row);
+        transform.position = miningGrid.GetNodeWorldPos(assignedCol, 0);
         StartCoroutine(WorkRoutine());
     }
 
@@ -32,27 +49,26 @@ public class WorkerNPC : MonoBehaviour
     {
         while (true)
         {
-            int columns = miningGrid.Columns;
+            int totalRows = miningGrid.Rows;
 
-            // 현재 칸의 노드 채굴 시도
-            RockNode node = miningGrid.GetActiveNodeInRow(assignedRow, currentCol);
+            // 현재 위치의 노드 채굴 시도
+            RockNode node = miningGrid.GetActiveNodeInRow(currentRow, assignedCol);
             if (node != null && node.IsActive)
             {
                 bool mined = node.MineForWorker();
-                if (mined && converter != null)
-                    converter.ReceiveOre(1);
+                if (mined && oreDropZone != null)
+                    oreDropZone.WorkerDeliverOre(miningGrid.OrePrefab);
 
                 yield return new WaitForSeconds(mineInterval);
             }
 
-            // 다음 칸으로 이동
-            int nextCol = movingForward ? currentCol + 1 : currentCol - 1;
+            // 다음 행으로 이동
+            int nextRow = movingForward ? currentRow + 1 : currentRow - 1;
 
-            if (nextCol >= columns) { movingForward = false; nextCol = currentCol - 1; }
-            if (nextCol < 0) { movingForward = true; nextCol = currentCol + 1; }
+            if (nextRow >= totalRows) { movingForward = false; nextRow = currentRow - 1; }
+            if (nextRow < 0)         { movingForward = true;  nextRow = currentRow + 1; }
 
-            Vector3 targetPos = miningGrid.GetRowStartWorld(assignedRow)
-                + Vector3.right * nextCol * GameManager.Instance.Settings.gridSpacingX;
+            Vector3 targetPos = miningGrid.GetNodeWorldPos(assignedCol, nextRow);
 
             while (Vector3.Distance(transform.position, targetPos) > 0.05f)
             {
@@ -62,7 +78,7 @@ public class WorkerNPC : MonoBehaviour
                 yield return null;
             }
             transform.position = targetPos;
-            currentCol = nextCol;
+            currentRow = nextRow;
         }
     }
 

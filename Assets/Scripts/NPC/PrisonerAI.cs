@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 // NavMesh 없이 Vector3.MoveTowards로 이동하는 수감자 AI.
-// 모든 이동은 코루틴으로 처리. Update는 사용하지 않음.
+// 경로: SpawnPoint → WaitPosition → DeskPosition → Cell (또는 외부 대기)
 public class PrisonerAI : MonoBehaviour
 {
     [SerializeField] private SpeechBubble speechBubble;
@@ -12,6 +12,7 @@ public class PrisonerAI : MonoBehaviour
 
     private DeskManager deskManager;
     private CellManager cellManager;
+    private PrisonerSpawner prisonerSpawner;
 
     private int handcuffsReceived = 0;
     private int handcuffsNeeded = 4;
@@ -29,19 +30,22 @@ public class PrisonerAI : MonoBehaviour
         }
     }
 
-    public void Initialize(Transform waitPos, DeskManager desk, CellManager cell)
+    // spawner 추가: WaitPosition 도착 시 콜백 전달용
+    public void Initialize(Transform waitPos, DeskManager desk, CellManager cell, PrisonerSpawner spawner)
     {
-        deskManager = desk;
-        cellManager = cell;
+        deskManager      = desk;
+        cellManager      = cell;
+        prisonerSpawner  = spawner;
         state = PrisonerState.WalkingToWaitPos;
         UpdateBubble();
         SetMovement(WalkTo(waitPos.position, () =>
         {
             state = PrisonerState.WaitingBehindDesk;
+            prisonerSpawner?.OnPrisonerArrivedAtWait(this); // 대기 도착 → 스포너에 알림
         }));
     }
 
-    // PrisonerSpawner가 Desk 슬롯 열리면 호출
+    // PrisonerSpawner가 슬롯 열리면 호출
     public void AdvanceToDesk(Transform deskPos)
     {
         state = PrisonerState.WalkingToWaitPos;
@@ -66,6 +70,7 @@ public class PrisonerAI : MonoBehaviour
             speechBubble?.Hide();
             state = PrisonerState.FullyProcessed;
             deskManager?.OnPrisonerLeft();
+            prisonerSpawner?.OnSlotFreed(); // 직접 spawner에 슬롯 해제 알림
             TryGoToCell();
         }
     }
@@ -77,7 +82,7 @@ public class PrisonerAI : MonoBehaviour
         WalkToCell(cellPos);
     }
 
-    // 대기줄 내 순번 변경 시 새 위치로 이동 (FIFO 재배치)
+    // 대기줄 내 순번 변경 시 새 위치로 이동
     public void MoveToQueuePosition(Transform newPos)
     {
         if (state != PrisonerState.WaitingOutsideCell) return;
@@ -88,7 +93,22 @@ public class PrisonerAI : MonoBehaviour
         }));
     }
 
+    // desk 처리 후 감옥 입구(L자 경유)까지 먼저 이동, 도착 후 cell 확인
     private void TryGoToCell()
+    {
+        Transform entrance = cellManager?.PrisonEntrance;
+        if (entrance == null)
+        {
+            // 경유지 없으면 기존 직행 방식 유지
+            AssignCellOrQueue();
+            return;
+        }
+
+        state = PrisonerState.WalkingToPrisonWait;
+        SetMovement(WalkTo(entrance.position, AssignCellOrQueue));
+    }
+
+    private void AssignCellOrQueue()
     {
         Transform cellPos = cellManager?.TryGetCellPosition(this);
         if (cellPos != null)
