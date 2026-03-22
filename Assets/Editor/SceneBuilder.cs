@@ -21,7 +21,7 @@ using System.Collections.Generic;
 /// </summary>
 public static class SceneBuilder
 {
-    // ── 위치 좌표 (씬 실측값 기준) ───────────────────────────────
+    // ── 위치 좌표 (씬 실측값 기준, 2026-03-21) ───────────────────
     // 채굴 구역
     static readonly Vector3 GRID_CENTER       = new Vector3(20.46f, 0f,  4.26f);
 
@@ -31,20 +31,19 @@ public static class SceneBuilder
     static readonly Vector3 HANDCUFF_PICKUP   = new Vector3(-0.82f, 0f, 15.11f);
 
     // 수감자/책상 구역
-    static readonly Vector3 PRISONER_SPAWN    = new Vector3(-10f,  0f, 18f);
-    static readonly Vector3 PRISONER_WAIT     = new Vector3( -7f,  0f, 13f);
-    static readonly Vector3 DESK_POS          = new Vector3( -8f,  0f, 11f);   // PoliceDeskArea
-    static readonly Vector3 DESK_FRONT_POS    = new Vector3( -4f,  0f, 11.5f); // 수감자가 서는 책상 앞
-    static readonly Vector3 MONEY_SPAWNER_POS = new Vector3( -2f,  0f, 13f);
-    static readonly Vector3 MONEY_PICKUP_POS  = new Vector3(-7.4f, 0f,  8.3f);
+    static readonly Vector3 PRISONER_SPAWN    = new Vector3(-10f,   0f, 18f);
+    static readonly Vector3 PRISONER_WAIT     = new Vector3(-9.95f, 0f, 14.32f);
+    static readonly Vector3 DESK_POS          = new Vector3( -8f,   0f, 11f);    // PoliceDeskArea
+    static readonly Vector3 DESK_FRONT_POS    = new Vector3(-9.97f, 0f, 11.5f); // 수감자가 서는 책상 앞
+    static readonly Vector3 MONEY_PICKUP_POS  = new Vector3(-7.4f,  0f,  8.3f);
     static readonly float   PRISONER_ROAD_X   = -10f;
 
-    // 업그레이드 존
-    static readonly Vector3 UPG_DRILL         = new Vector3( 5.02f, 0f, 6.24f);
-    static readonly Vector3 UPG_DRILLCAR      = new Vector3(10f,    0f, 9f);
-    static readonly Vector3 UPG_WORKER        = new Vector3( 8f,    0f, 6f);
-    static readonly Vector3 UPG_AUTOSELL      = new Vector3(-4f,    0f, 9f);
-    static readonly Vector3 UPG_PRISON        = new Vector3( 2f,    0f, 2f);
+    // 업그레이드 존 (씬 실측값)
+    static readonly Vector3 UPG_DRILL         = new Vector3( 5.02f, 0f,  6.24f);
+    static readonly Vector3 UPG_DRILLCAR      = new Vector3( 5.02f, 0f,  6.27f);
+    static readonly Vector3 UPG_WORKER        = new Vector3( 5.06f, 0f,  2.71f);
+    static readonly Vector3 UPG_AUTOSELL      = new Vector3(-4.54f, 0f, 10.86f);
+    static readonly Vector3 UPG_PRISON        = new Vector3( 2.00f, 0f, -0.05f);
 
     // 감옥
     static readonly Vector3 PRISON_20_CENTER  = new Vector3( 3f,  0f, -7f);
@@ -98,8 +97,8 @@ public static class SceneBuilder
 
         var prisonResult = BuildPrison();
         var deskResult   = BuildDesk();
-        BuildPrisonerSpawner(deskResult.desk, prisonResult.cellManager, deskResult.moneySpawner);
-        BuildMoneyPickupZone(deskResult.moneySpawner);
+        BuildPrisonerSpawner(deskResult.desk, prisonResult.cellManager);
+        BuildMoneyPickupZone(deskResult.desk);
 
         BuildUpgradeZones(prisonResult.cellManager, grid, prisonResult.prison100);
         BuildOuterWalls();
@@ -147,13 +146,13 @@ public static class SceneBuilder
         c.fieldOfView = 50f;
         c.farClipPlane = 300f;
 
-        // 아이소메트릭 45° 뷰 (줌 인: offset 축소, FOV 축소)
+        // 아이소메트릭 45° 뷰
         cam.transform.rotation = Quaternion.Euler(50f, 45f, 0f);
-        cam.transform.position = PLAYER_START + new Vector3(-5f, 8f, -5f);
+        cam.transform.position = PLAYER_START + new Vector3(-7f, 12f, -7f);
 
         var follow = cam.AddComponent<CameraFollow>();
         var soFollow = new SerializedObject(follow);
-        soFollow.FindProperty("offset").vector3Value = new Vector3(-5f, 8f, -5f);
+        soFollow.FindProperty("offset").vector3Value = new Vector3(-7f, 12f, -7f);
         soFollow.ApplyModifiedPropertiesWithoutUndo();
 
         return cam;
@@ -246,30 +245,45 @@ public static class SceneBuilder
         gridFloor.GetComponent<Collider>().enabled = false;
 
         // ── 울타리 (모두 group 자식) ─────────────────────────────────
-        // 앞/뒤 가로 울타리 (X방향으로 뻗음)
+        // 앞/뒤 울타리: side=0(입구 쪽)은 코너 기둥만, side=1(안쪽)은 전체
         for (int side = 0; side < 2; side++)
         {
             float lz = side == 0 ? -hd : hd;
-            for (int c = -3; c <= 3; c++)
-                MakeChildCube(group, $"FencePost_FB_{side}_{c}",
-                    new Vector3(c * (totalW / 6f), 0.6f, lz),
+            if (side == 0)
+            {
+                // 입구 쪽: 코너 기둥 2개만 (c=-3, c=3), 레일 없음
+                MakeChildCube(group, $"FencePost_FB_{side}_{-3}",
+                    new Vector3(-3 * (totalW / 6f), 0.6f, lz),
                     new Vector3(0.15f, 1.4f, 0.15f), COL_FENCE);
-            MakeChildCube(group, $"FenceRail_FB_{side}",
-                new Vector3(0f, 0.9f, lz),
-                new Vector3(totalW, 0.12f, 0.12f), COL_FENCE);
-            MakeChildCube(group, $"FenceRail2_FB_{side}",
-                new Vector3(0f, 0.4f, lz),
-                new Vector3(totalW, 0.12f, 0.12f), COL_FENCE);
+                MakeChildCube(group, $"FencePost_FB_{side}_{3}",
+                    new Vector3( 3 * (totalW / 6f), 0.6f, lz),
+                    new Vector3(0.15f, 1.4f, 0.15f), COL_FENCE);
+            }
+            else
+            {
+                for (int c = -3; c <= 3; c++)
+                    MakeChildCube(group, $"FencePost_FB_{side}_{c}",
+                        new Vector3(c * (totalW / 6f), 0.6f, lz),
+                        new Vector3(0.15f, 1.4f, 0.15f), COL_FENCE);
+                MakeChildCube(group, $"FenceRail_FB_{side}",
+                    new Vector3(0f, 0.9f, lz),
+                    new Vector3(totalW, 0.12f, 0.12f), COL_FENCE);
+                MakeChildCube(group, $"FenceRail2_FB_{side}",
+                    new Vector3(0f, 0.4f, lz),
+                    new Vector3(totalW, 0.12f, 0.12f), COL_FENCE);
+            }
         }
 
-        // 좌/우 세로 울타리 (Z방향으로 뻗음, 이쪽이 긴 면)
-        // side=1 (local +X) 은 90° 회전 후 플레이어 방향(-Z)을 향하는 입구 → 제거
+        // 좌/우 세로 울타리 (Z방향으로 뻗음)
+        // side=0: 전체 기둥(r=0~10) + 레일
+        // side=1: 내부 기둥만(r=1~9, 코너는 FB 기둥이 대신) + 레일
         for (int side = 0; side < 2; side++)
         {
-            if (side == 1) continue; // 입구 쪽 펜스 제거
             float lx = side == 0 ? -hw : hw;
             int postCount = 11;
-            for (int r = 0; r < postCount; r++)
+            int rStart = side == 1 ? 1 : 0;
+            int rEnd   = side == 1 ? postCount - 2 : postCount - 1;
+            for (int r = rStart; r <= rEnd; r++)
                 MakeChildCube(group, $"FencePost_LR_{side}_{r}",
                     new Vector3(lx, 0.6f, -hd + r * (totalD / (postCount - 1))),
                     new Vector3(0.15f, 1.4f, 0.15f), COL_FENCE);
@@ -372,16 +386,20 @@ public static class SceneBuilder
         convSO.ApplyModifiedPropertiesWithoutUndo();
     }
 
-    static void BuildMoneyPickupZone(MoneySpawner moneySpawner)
+    // DeskManager에 moneyPrefab + moneyPickupZone 연결
+    static void BuildMoneyPickupZone(DeskManager deskManager)
     {
         var moneyDZ = BuildDropZone("MoneyPickupZone", MONEY_PICKUP_POS,
             new Vector3(2.5f, 2f, 2f),
             DropZoneType.MoneyPickup, COL_ZONE_MONEY, "돈 받아가는 곳");
 
-        // MoneySpawner → MoneyPickupZone 연결
-        var msSO = new SerializedObject(moneySpawner);
-        msSO.FindProperty("moneyDropZone").objectReferenceValue = moneyDZ;
-        msSO.ApplyModifiedPropertiesWithoutUndo();
+        var cashPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Prefabs/CashPrefab.prefab");
+
+        var dmSO = new SerializedObject(deskManager);
+        dmSO.FindProperty("moneyPrefab").objectReferenceValue      = cashPrefab;
+        dmSO.FindProperty("moneyPickupZone").objectReferenceValue  = moneyDZ;
+        dmSO.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static DropZone BuildDropZone(string name, Vector3 pos, Vector3 size,
@@ -438,12 +456,13 @@ public static class SceneBuilder
     // ════════════════════════════════════════════════════════════
     // 경찰 책상 + DeskManager + MoneySpawner
     // ════════════════════════════════════════════════════════════
-    struct DeskResult { public DeskManager desk; public MoneySpawner moneySpawner; }
+    struct DeskResult { public DeskManager desk; }
 
     static DeskResult BuildDesk()
     {
         var deskRoot = new GameObject("PoliceDeskArea");
         deskRoot.transform.position = DESK_POS;
+        deskRoot.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
 
         MakeChildCube(deskRoot, "Top",
             new Vector3(0f, 0.4f, 0f),
@@ -459,12 +478,6 @@ public static class SceneBuilder
                 new Color(0.6f, 0.4f, 0.2f));
         }
 
-        var dzoneObj = new GameObject("DeskZone");
-        dzoneObj.transform.position = DESK_POS;
-        var bc = dzoneObj.AddComponent<BoxCollider>();
-        bc.isTrigger = true;
-        bc.size = new Vector3(3.5f, 2f, 2f);
-
         MakeLabel(deskRoot.transform, "경찰 책상",
             new Vector3(0f, 1.2f, 0f), COL_DESK, 2.8f);
 
@@ -472,27 +485,20 @@ public static class SceneBuilder
         stackPt.transform.SetParent(deskRoot.transform);
         stackPt.transform.localPosition = new Vector3(0f, 0.5f, 0f);
 
-        // 돈 스포너
-        var msObj = new GameObject("MoneySpawner");
-        msObj.transform.position = MONEY_SPAWNER_POS;
-        MakeChildCube(msObj, "Body", Vector3.zero,
-            new Vector3(1f, 0.6f, 1f), new Color(0.8f, 0.8f, 0.1f));
-        MakeLabel(msObj.transform, "돈", new Vector3(0f, 0.8f, 0f), Color.yellow, 2.5f);
-
-        var cashPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-            "Assets/Prefabs/CashPrefab.prefab");
-
-        var ms = msObj.AddComponent<MoneySpawner>();
-        var msSO = new SerializedObject(ms);
-        msSO.FindProperty("moneyPrefab").objectReferenceValue = cashPrefab;
-        msSO.ApplyModifiedPropertiesWithoutUndo();
+        // DeskZone: 책상과 수감자 사이 — 플레이어가 수갑을 내려놓는 영역
+        var dzoneObj = new GameObject("DeskZone");
+        dzoneObj.transform.position = new Vector3(
+            (DESK_POS.x + DESK_FRONT_POS.x) * 0.5f, 0f, DESK_FRONT_POS.z);
+        var bc = dzoneObj.AddComponent<BoxCollider>();
+        bc.isTrigger = true;
+        bc.size = new Vector3(4f, 2f, 3f);
 
         var dmObj = new GameObject("DeskManager");
         dmObj.transform.position = DESK_POS;
         var dm = dmObj.AddComponent<DeskManager>();
         var dmSO = new SerializedObject(dm);
         dmSO.FindProperty("deskStackPoint").objectReferenceValue = stackPt.transform;
-        dmSO.FindProperty("moneySpawner").objectReferenceValue   = ms;
+        // moneyPrefab / moneyPickupZone → BuildMoneyPickupZone에서 연결
         dmSO.ApplyModifiedPropertiesWithoutUndo();
 
         var dz = dzoneObj.AddComponent<DeskZone>();
@@ -500,7 +506,7 @@ public static class SceneBuilder
         dzSO.FindProperty("deskManager").objectReferenceValue = dm;
         dzSO.ApplyModifiedPropertiesWithoutUndo();
 
-        return new DeskResult { desk = dm, moneySpawner = ms };
+        return new DeskResult { desk = dm };
     }
 
     // ════════════════════════════════════════════════════════════
@@ -553,6 +559,8 @@ public static class SceneBuilder
         var cellRoot = MakeMarker("CellRoot", prisonRoot,
                                   PRISON_20_CENTER + new Vector3(0f, 0f, -2f),
                                   new Color(0.2f, 1f, 0.3f));
+        // MarkerVis를 씬에서 이동한 위치로 고정
+        cellRoot.transform.Find("MarkerVis").localPosition = new Vector3(0f, 0f, 1.79f);
 
         // 감옥 밖 FIFO 대기줄 시작 위치 — 철창(-X면) 바로 앞, +Z 방향으로 줄 섬
         float p20LeftX = PRISON_20_CENTER.x - PRISON_20_W * 0.5f - 1.5f;
@@ -628,11 +636,11 @@ public static class SceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════
-    // 수감자 스포너
+    // 수감자 스포너 + 이동 경로 마커
     // ════════════════════════════════════════════════════════════
-    static void BuildPrisonerSpawner(DeskManager desk, CellManager cellManager,
-                                      MoneySpawner moneySpawner)
+    static void BuildPrisonerSpawner(DeskManager desk, CellManager cellManager)
     {
+        // ── 스포너 본체 ─────────────────────────────────────────
         var spawnerRoot = new GameObject("PrisonerSpawner");
         spawnerRoot.transform.position = PRISONER_SPAWN;
 
@@ -641,14 +649,23 @@ public static class SceneBuilder
         MakeLabel(spawnerRoot.transform, "수감자\n스포너",
             new Vector3(0f, 1.5f, 0f), COL_PRISONER, 3f);
 
-        var spawnPt = MakeMarker("SpawnPoint",   spawnerRoot, PRISONER_SPAWN,
-                                  new Color(1f, 0.2f, 0.2f));   // 빨강 = 스폰
-        var waitPt  = MakeMarker("WaitPosition", null, PRISONER_WAIT,
-                                  new Color(1f, 0.9f, 0f));     // 노랑 = 대기
-        var deskPt  = MakeMarker("DeskPosition", null,
-                          DESK_FRONT_POS,
-                                  new Color(0.2f, 0.8f, 1f));   // 하늘 = 책상 앞
+        // ── 이동 경로 마커 그룹 (PrisonerPath) ─────────────────
+        // 기존 마커 제거 후 새로 생성 (Rebuild Scene 시 자동 처리됨)
+        // 경로: ① SpawnPoint(빨강) → ② WaitPosition(노랑) → ③ DeskPosition(하늘)
+        var pathRoot = new GameObject("PrisonerPath");
 
+        var spawnPt = MakePathMarker("SpawnPoint",   pathRoot, PRISONER_SPAWN,
+                                     new Color(1f, 0.15f, 0.15f), "① 스폰");
+        var waitPt  = MakePathMarker("WaitPosition", pathRoot, PRISONER_WAIT,
+                                     new Color(1f, 0.85f, 0f),    "② 대기");
+        var deskPt  = MakePathMarker("DeskPosition", pathRoot, DESK_FRONT_POS,
+                                     new Color(0.15f, 0.75f, 1f), "③ 책상앞");
+
+        // 경로 연결 화살표
+        MakePathArrow(pathRoot, PRISONER_SPAWN, PRISONER_WAIT,  new Color(1f, 0.6f, 0.1f));
+        MakePathArrow(pathRoot, PRISONER_WAIT,  DESK_FRONT_POS, new Color(0.3f, 0.85f, 1f));
+
+        // ── PrisonerSpawner 컴포넌트 연결 ──────────────────────
         var prisonerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
             "Assets/Prefabs/PrisonerPrefab.prefab");
 
@@ -661,10 +678,55 @@ public static class SceneBuilder
         so.FindProperty("deskManager").objectReferenceValue    = desk;
         so.FindProperty("cellManager").objectReferenceValue    = cellManager;
         so.ApplyModifiedPropertiesWithoutUndo();
+    }
 
-        var dmSO = new SerializedObject(desk);
-        dmSO.FindProperty("prisonerSpawner").objectReferenceValue = ps;
-        dmSO.ApplyModifiedPropertiesWithoutUndo();
+    // 번호 라벨이 달린 경로 마커
+    static GameObject MakePathMarker(string name, GameObject parent,
+                                      Vector3 worldPos, Color color, string label)
+    {
+        var obj = new GameObject(name);
+        obj.transform.SetParent(parent.transform);
+        obj.transform.position = worldPos;
+
+        // 마커 구체 (런타임에도 보임)
+        var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        sphere.name = "MarkerVis";
+        sphere.transform.SetParent(obj.transform);
+        sphere.transform.localPosition = Vector3.zero;
+        sphere.transform.localScale    = Vector3.one * 0.55f;
+        sphere.GetComponent<Renderer>().sharedMaterial = MakeMat(color);
+        Object.DestroyImmediate(sphere.GetComponent<Collider>());
+
+        // 기둥 (마커 위치 강조)
+        var pole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        pole.name = "Pole";
+        pole.transform.SetParent(obj.transform);
+        pole.transform.localPosition = new Vector3(0f, 0.6f, 0f);
+        pole.transform.localScale    = new Vector3(0.06f, 0.6f, 0.06f);
+        pole.GetComponent<Renderer>().sharedMaterial = MakeMat(color * 0.6f);
+        Object.DestroyImmediate(pole.GetComponent<Collider>());
+
+        // 번호 라벨 (카메라 방향)
+        MakeLabel(obj.transform, label, new Vector3(0f, 1.5f, 0f), color, 2.8f);
+
+        return obj;
+    }
+
+    // 두 지점을 잇는 얇은 경로 화살표 (씬 뷰 + 런타임 가시화)
+    static void MakePathArrow(GameObject parent, Vector3 from, Vector3 to, Color color)
+    {
+        Vector3 dir    = to - from;
+        float   length = dir.magnitude;
+        Vector3 mid    = (from + to) * 0.5f + Vector3.up * 0.05f;
+
+        var cyl = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        cyl.name = "PathLine";
+        cyl.transform.SetParent(parent.transform);
+        cyl.transform.position  = mid;
+        cyl.transform.rotation  = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
+        cyl.transform.localScale = new Vector3(0.07f, length * 0.5f, 0.07f);
+        cyl.GetComponent<Renderer>().sharedMaterial = MakeMat(new Color(color.r, color.g, color.b, 0.6f));
+        Object.DestroyImmediate(cyl.GetComponent<Collider>());
     }
 
     // ════════════════════════════════════════════════════════════
@@ -880,69 +942,122 @@ public static class SceneBuilder
     }
 
     // ════════════════════════════════════════════════════════════
-    // 외벽 (전체 맵을 감싸는 경계벽)
+    // 외벽 (L자형 — 액터를 효율적으로 감싸는 형태)
     // ════════════════════════════════════════════════════════════
-    // 씬 실측 범위: X(-14~33) Z(-15~27) + 패딩 3유닛
-    static readonly float WALL_X_MIN = -17f;
-    static readonly float WALL_X_MAX =  36f;
-    static readonly float WALL_Z_MIN = -18f;
-    static readonly float WALL_Z_MAX =  30f;
-    static readonly float WALL_H     =  3.5f;
-    static readonly float WALL_T     =  0.6f;
+    // 폴리곤 꼭짓점 (XZ): (-12,20)→(8,20)→(8,14)→(35,14)→(35,-14)→(-12,-14)
+    // 왼쪽 구역(X -12~8): 수감자/컨버터/수갑픽업 포함, Z -14~20 전체
+    // 오른쪽 구역(X 8~35): 채석장/감옥 포함, Z -14~14
+    static readonly float WALL_H = 3.5f;
+    static readonly float WALL_T = 0.6f;
+
+    // L-shape 꼭짓점 좌표
+    static readonly float WX_LEFT  = -12f;
+    static readonly float WX_STEP  =   8f;
+    static readonly float WX_RIGHT =  35f;
+    static readonly float WZ_SOUTH = -14f;
+    static readonly float WZ_STEP  =  14f;
+    static readonly float WZ_NORTH =  20f;
 
     [MenuItem("Game/Add Outer Walls")]
     public static void BuildOuterWalls()
     {
-        // 기존 외벽 제거
         var existing = GameObject.Find("OuterWalls");
         if (existing != null) Object.DestroyImmediate(existing);
 
         var root = new GameObject("OuterWalls");
         Color wallCol = new Color(0.55f, 0.52f, 0.48f); // 석재 회색
+        Color capCol  = new Color(0.42f, 0.38f, 0.34f); // 상단 장식 띠
+        Color postCol = new Color(0.38f, 0.34f, 0.30f); // 코너 기둥
 
-        float cx = (WALL_X_MIN + WALL_X_MAX) * 0.5f;
-        float cz = (WALL_Z_MIN + WALL_Z_MAX) * 0.5f;
-        float spanX = WALL_X_MAX - WALL_X_MIN;
-        float spanZ = WALL_Z_MAX - WALL_Z_MIN;
-        float halfH = WALL_H * 0.5f;
-
-        // 남쪽 벽 (-Z)
-        MakeChildCube(root, "Wall_South",
-            new Vector3(cx, halfH, WALL_Z_MIN),
-            new Vector3(spanX + WALL_T, WALL_H, WALL_T), wallCol);
-
-        // 북쪽 벽 (+Z)
-        MakeChildCube(root, "Wall_North",
-            new Vector3(cx, halfH, WALL_Z_MAX),
-            new Vector3(spanX + WALL_T, WALL_H, WALL_T), wallCol);
-
-        // 서쪽 벽 (-X)
-        MakeChildCube(root, "Wall_West",
-            new Vector3(WALL_X_MIN, halfH, cz),
-            new Vector3(WALL_T, WALL_H, spanZ - WALL_T), wallCol);
-
-        // 동쪽 벽 (+X)
-        MakeChildCube(root, "Wall_East",
-            new Vector3(WALL_X_MAX, halfH, cz),
-            new Vector3(WALL_T, WALL_H, spanZ - WALL_T), wallCol);
-
-        // 상단 테두리 장식선 (벽 위에 얇은 띠)
-        Color capCol = new Color(0.42f, 0.38f, 0.34f);
+        float hH  = WALL_H * 0.5f;
         float capH = 0.18f;
         float capY = WALL_H + capH * 0.5f;
+        float T   = WALL_T;
+        float cT  = T + 0.12f; // 캡 두께
 
-        MakeChildCube(root, "Cap_South", new Vector3(cx, capY, WALL_Z_MIN),
-            new Vector3(spanX + WALL_T + 0.12f, capH, WALL_T + 0.12f), capCol);
-        MakeChildCube(root, "Cap_North", new Vector3(cx, capY, WALL_Z_MAX),
-            new Vector3(spanX + WALL_T + 0.12f, capH, WALL_T + 0.12f), capCol);
-        MakeChildCube(root, "Cap_West",  new Vector3(WALL_X_MIN, capY, cz),
-            new Vector3(WALL_T + 0.12f, capH, spanZ - WALL_T + 0.12f), capCol);
-        MakeChildCube(root, "Cap_East",  new Vector3(WALL_X_MAX, capY, cz),
-            new Vector3(WALL_T + 0.12f, capH, spanZ - WALL_T + 0.12f), capCol);
+        // ─── 6개 벽 세그먼트 ────────────────────────────────────────
+        // 1. 서쪽 벽: X=-12, Z(-14~20), 전체 높이
+        float westSpanZ = WZ_NORTH - WZ_SOUTH;
+        float westCZ    = (WZ_NORTH + WZ_SOUTH) * 0.5f;
+        MakeChildCube(root, "Wall_West",
+            new Vector3(WX_LEFT, hH, westCZ),
+            new Vector3(T, WALL_H, westSpanZ), wallCol);
+        MakeChildCube(root, "Cap_West",
+            new Vector3(WX_LEFT, capY, westCZ),
+            new Vector3(cT, capH, westSpanZ + cT), capCol);
+
+        // 2. 북쪽-왼쪽 벽: Z=20, X(-12~8)
+        float northLSpanX = WX_STEP - WX_LEFT;
+        float northLCX    = (WX_LEFT + WX_STEP) * 0.5f;
+        MakeChildCube(root, "Wall_North_Left",
+            new Vector3(northLCX, hH, WZ_NORTH),
+            new Vector3(northLSpanX, WALL_H, T), wallCol);
+        MakeChildCube(root, "Cap_North_Left",
+            new Vector3(northLCX, capY, WZ_NORTH),
+            new Vector3(northLSpanX + cT, capH, cT), capCol);
+
+        // 3. 계단 벽 (내부 노치): X=8, Z(14~20)
+        float stepSpanZ = WZ_NORTH - WZ_STEP;
+        float stepCZ    = (WZ_NORTH + WZ_STEP) * 0.5f;
+        MakeChildCube(root, "Wall_Step",
+            new Vector3(WX_STEP, hH, stepCZ),
+            new Vector3(T, WALL_H, stepSpanZ), wallCol);
+        MakeChildCube(root, "Cap_Step",
+            new Vector3(WX_STEP, capY, stepCZ),
+            new Vector3(cT, capH, stepSpanZ + cT), capCol);
+
+        // 4. 북쪽-오른쪽 벽: Z=14, X(8~35)
+        float northRSpanX = WX_RIGHT - WX_STEP;
+        float northRCX    = (WX_RIGHT + WX_STEP) * 0.5f;
+        MakeChildCube(root, "Wall_North_Right",
+            new Vector3(northRCX, hH, WZ_STEP),
+            new Vector3(northRSpanX, WALL_H, T), wallCol);
+        MakeChildCube(root, "Cap_North_Right",
+            new Vector3(northRCX, capY, WZ_STEP),
+            new Vector3(northRSpanX + cT, capH, cT), capCol);
+
+        // 5. 동쪽 벽: X=35, Z(-14~14)
+        float eastSpanZ = WZ_STEP - WZ_SOUTH;
+        float eastCZ    = (WZ_STEP + WZ_SOUTH) * 0.5f;
+        MakeChildCube(root, "Wall_East",
+            new Vector3(WX_RIGHT, hH, eastCZ),
+            new Vector3(T, WALL_H, eastSpanZ), wallCol);
+        MakeChildCube(root, "Cap_East",
+            new Vector3(WX_RIGHT, capY, eastCZ),
+            new Vector3(cT, capH, eastSpanZ + cT), capCol);
+
+        // 6. 남쪽 벽: Z=-14, X(-12~35)
+        float southSpanX = WX_RIGHT - WX_LEFT;
+        float southCX    = (WX_RIGHT + WX_LEFT) * 0.5f;
+        MakeChildCube(root, "Wall_South",
+            new Vector3(southCX, hH, WZ_SOUTH),
+            new Vector3(southSpanX, WALL_H, T), wallCol);
+        MakeChildCube(root, "Cap_South",
+            new Vector3(southCX, capY, WZ_SOUTH),
+            new Vector3(southSpanX + cT, capH, cT), capCol);
+
+        // ─── 6개 꼭짓점 코너 기둥 ─────────────────────────────────
+        float postSize = T + 0.2f;
+        float postH    = WALL_H + capH + 0.05f;
+        float postHH   = postH * 0.5f;
+        Vector3 postScale = new Vector3(postSize, postH, postSize);
+        foreach (var (name, x, z) in new (string, float, float)[]
+        {
+            ("Post_NW",  WX_LEFT,  WZ_NORTH),
+            ("Post_NS",  WX_STEP,  WZ_NORTH),
+            ("Post_SW",  WX_STEP,  WZ_STEP ),
+            ("Post_NE",  WX_RIGHT, WZ_STEP ),
+            ("Post_SE",  WX_RIGHT, WZ_SOUTH),
+            ("Post_WSW", WX_LEFT,  WZ_SOUTH),
+        })
+        {
+            MakeChildCube(root, name,
+                new Vector3(x, postHH, z), postScale, postCol);
+        }
 
         EditorSceneManager.MarkSceneDirty(
             UnityEngine.SceneManagement.SceneManager.GetActiveScene());
-        Debug.Log("[SceneBuilder] 외벽 생성 완료");
+        Debug.Log("[SceneBuilder] L자형 외벽 생성 완료");
     }
 
     // ════════════════════════════════════════════════════════════

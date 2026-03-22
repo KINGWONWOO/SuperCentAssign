@@ -15,6 +15,9 @@ public class RockNode : MonoBehaviour
             nodeMeshes = GetComponentsInChildren<MeshRenderer>();
         if (nodeCollider == null)
             nodeCollider = GetComponent<Collider>();
+        // CharacterController는 trigger 콜라이더를 통과 → 돌에 막히지 않음
+        if (nodeCollider != null)
+            nodeCollider.isTrigger = true;
     }
 
     // 플레이어 채굴 — 광석 추가 시도 후 돌 사라짐 (스택 가득 차도 돌은 사라짐)
