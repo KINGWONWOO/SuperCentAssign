@@ -740,27 +740,27 @@ public static class SceneBuilder
 
         var upgDrill = BuildUpgradeZone(root.transform, "UpgDrill", UPG_DRILL,
             UpgradeType.Drill, "$20\n드릴", COL_UPG_DRILL,
-            cellManager, miningGrid, null);
+            cellManager, miningGrid, null, "drillupgrade");
 
         var upgDrillCar = BuildUpgradeZone(root.transform, "UpgDrillCar", UPG_DRILLCAR,
             UpgradeType.DrillCar, "$50\n드릴 차", COL_UPG_DRCAR,
-            cellManager, miningGrid, null);
+            cellManager, miningGrid, null, "bullupgrade");
         upgDrillCar.SetActive(false);
 
         var upgWorker = BuildUpgradeZone(root.transform, "UpgWorker", UPG_WORKER,
             UpgradeType.WorkerHire, "$40\n인력 고용", COL_UPG_WORK,
-            cellManager, miningGrid, null);
+            cellManager, miningGrid, null, "miningupgrade");
         upgWorker.SetActive(false);
 
         var upgAutoSell = BuildUpgradeZone(root.transform, "UpgAutoSell", UPG_AUTOSELL,
             UpgradeType.AutoSell, "$50\n자동 판매", COL_UPG_AUTO,
-            cellManager, miningGrid, null);
+            cellManager, miningGrid, null, "sellupgrade");
         upgAutoSell.SetActive(false);
 
         // PrisonExpand: prison100를 직접 참조 (비활성 오브젝트도 안전하게 전달)
         var upgPrison = BuildUpgradeZone(root.transform, "UpgPrison", UPG_PRISON,
             UpgradeType.PrisonExpand, "$50\n감옥 확장", COL_UPG_PRIS,
-            cellManager, miningGrid, prison100);
+            cellManager, miningGrid, prison100, "jailupgrade");
         upgPrison.SetActive(false);
 
         // 드릴 업그레이드 완료 → 드릴차 + 인력 + 자판 활성화
@@ -788,7 +788,8 @@ public static class SceneBuilder
 
     static GameObject BuildUpgradeZone(Transform parent, string name, Vector3 pos,
         UpgradeType upgradeType, string label, Color color,
-        CellManager cellManager, MiningGrid miningGrid, GameObject activateOnComplete)
+        CellManager cellManager, MiningGrid miningGrid, GameObject activateOnComplete,
+        string textureName = null)
     {
         var obj = new GameObject(name);
         obj.transform.SetParent(parent);
@@ -842,6 +843,29 @@ public static class SceneBuilder
             arr.GetArrayElementAtIndex(0).objectReferenceValue = activateOnComplete;
         }
         so.ApplyModifiedPropertiesWithoutUndo();
+
+        // 바닥 이미지 (카메라 빌보드 없이 바닥 위에 눕혀 놓기)
+        if (textureName != null)
+        {
+            var tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(
+                $"Assets/Textures/UI/{textureName}.png");
+            if (tex != null)
+            {
+                var imgObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                imgObj.name = "UpgradeImage";
+                imgObj.transform.SetParent(obj.transform, false);
+                imgObj.transform.localPosition = new Vector3(0f, -0.43f, 0f);
+                imgObj.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                imgObj.transform.localScale    = new Vector3(1.8f, 1.8f, 1f);
+                Object.DestroyImmediate(imgObj.GetComponent<MeshCollider>());
+                var mat2 = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+                mat2.mainTexture = tex;
+                mat2.SetFloat("_Surface", 1f);
+                mat2.SetFloat("_Blend", 0f);
+                mat2.renderQueue = 3000;
+                imgObj.GetComponent<MeshRenderer>().sharedMaterial = mat2;
+            }
+        }
 
         return obj;
     }
