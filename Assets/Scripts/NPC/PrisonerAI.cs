@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 // NavMesh 없이 Vector3.MoveTowards로 이동하는 수감자 AI.
-// 경로: SpawnPoint → WaitPosition → DeskPosition → Cell (또는 외부 대기)
+// 경로: SpawnPoint → WaitPosition → DeskPosition → PrisonEntrance(MarkerVis) → Cell (또는 외부 대기)
 public class PrisonerAI : MonoBehaviour
 {
     [SerializeField] private SpeechBubble speechBubble;
@@ -13,6 +13,8 @@ public class PrisonerAI : MonoBehaviour
     private DeskManager deskManager;
     private CellManager cellManager;
     private PrisonerSpawner prisonerSpawner;
+
+    private Vector3 deskPos;   // 실제 목적지 좌표 (MarkerVis 반영)
 
     private int handcuffsReceived = 0;
     private int handcuffsNeeded = 4;
@@ -30,26 +32,30 @@ public class PrisonerAI : MonoBehaviour
         }
     }
 
-    // spawner 추가: WaitPosition 도착 시 콜백 전달용
-    public void Initialize(Transform waitPos, DeskManager desk, CellManager cell, PrisonerSpawner spawner)
+    // PrisonerSpawner가 호출 — 모든 목적지를 Vector3으로 직접 전달
+    public void InitializeWithPositions(Vector3 waitPos, Vector3 deskWorldPos,
+        DeskManager desk, CellManager cell, PrisonerSpawner spawner)
     {
-        deskManager      = desk;
-        cellManager      = cell;
-        prisonerSpawner  = spawner;
+        deskManager     = desk;
+        cellManager     = cell;
+        prisonerSpawner = spawner;
+        deskPos         = deskWorldPos;
+
         state = PrisonerState.WalkingToWaitPos;
         UpdateBubble();
-        SetMovement(WalkTo(waitPos.position, () =>
+        SetMovement(WalkTo(waitPos, () =>
         {
             state = PrisonerState.WaitingBehindDesk;
-            prisonerSpawner?.OnPrisonerArrivedAtWait(this); // 대기 도착 → 스포너에 알림
+            prisonerSpawner?.OnPrisonerArrivedAtWait(this);
         }));
     }
 
-    // PrisonerSpawner가 슬롯 열리면 호출
-    public void AdvanceToDesk(Transform deskPos)
+    // PrisonerSpawner가 슬롯 열리면 호출 — 미리 받아둔 deskPos로 이동
+    public void AdvanceToDesk(Vector3 targetDeskPos)
     {
+        deskPos = targetDeskPos;
         state = PrisonerState.WalkingToWaitPos;
-        SetMovement(WalkTo(deskPos.position, () =>
+        SetMovement(WalkTo(deskPos, () =>
         {
             state = PrisonerState.AtDesk;
             deskManager?.RegisterPrisoner(this);
@@ -70,7 +76,7 @@ public class PrisonerAI : MonoBehaviour
             speechBubble?.Hide();
             state = PrisonerState.FullyProcessed;
             deskManager?.OnPrisonerLeft();
-            prisonerSpawner?.OnSlotFreed(); // 직접 spawner에 슬롯 해제 알림
+            prisonerSpawner?.OnSlotFreed();
             TryGoToCell();
         }
     }
@@ -79,7 +85,7 @@ public class PrisonerAI : MonoBehaviour
     {
         if (state != PrisonerState.WaitingOutsideCell) return;
         speechBubble?.Hide();
-        WalkToCell(cellPos);
+        WalkToCell(cellPos.position);
     }
 
     // 대기줄 내 순번 변경 시 새 위치로 이동
@@ -93,19 +99,19 @@ public class PrisonerAI : MonoBehaviour
         }));
     }
 
-    // desk 처리 후 감옥 입구(L자 경유)까지 먼저 이동, 도착 후 cell 확인
+    // desk 처리 후 감옥 입구(PrisonEntrance MarkerVis) → cell 또는 대기
     private void TryGoToCell()
     {
-        Transform entrance = cellManager?.PrisonEntrance;
-        if (entrance == null)
+        Vector3 entrancePos = cellManager != null ? cellManager.PrisonEntrancePos : Vector3.zero;
+
+        if (cellManager == null || entrancePos == Vector3.zero)
         {
-            // 경유지 없으면 기존 직행 방식 유지
             AssignCellOrQueue();
             return;
         }
 
         state = PrisonerState.WalkingToPrisonWait;
-        SetMovement(WalkTo(entrance.position, AssignCellOrQueue));
+        SetMovement(WalkTo(entrancePos, AssignCellOrQueue));
     }
 
     private void AssignCellOrQueue()
@@ -113,7 +119,7 @@ public class PrisonerAI : MonoBehaviour
         Transform cellPos = cellManager?.TryGetCellPosition(this);
         if (cellPos != null)
         {
-            WalkToCell(cellPos);
+            WalkToCell(cellPos.position);
         }
         else
         {
@@ -129,10 +135,10 @@ public class PrisonerAI : MonoBehaviour
         }
     }
 
-    private void WalkToCell(Transform cellPos)
+    private void WalkToCell(Vector3 cellWorldPos)
     {
         state = PrisonerState.WalkingToCell;
-        SetMovement(WalkTo(cellPos.position, () =>
+        SetMovement(WalkTo(cellWorldPos, () =>
         {
             state = PrisonerState.InCell;
             cellManager?.ConfirmPrisonerInCell(this);

@@ -4,6 +4,7 @@ using TMPro;
 
 // 감방 수용 관리. 기본 20명, 업그레이드 시 100명.
 // 초과 시 수감자는 감옥 앞에서 FIFO 줄을 서며 대기.
+// 모든 waypoint는 MarkerVis 자식이 있으면 그 위치를 사용.
 public class CellManager : MonoBehaviour
 {
     [SerializeField] private Transform cellRoot;             // 감방 내부 위치들의 부모
@@ -11,15 +12,37 @@ public class CellManager : MonoBehaviour
     [SerializeField] private float queueSpacing = 1.5f;      // 줄 서는 간격
     [SerializeField] private TextMeshPro cellCounterText;
 
+    // 수감자 Y 오프셋: 캡슐 반높이(0.85) 만큼 올려서 바닥에 서도록
+    private const float PRISONER_Y_OFFSET = 0.85f;
+
     private int capacity;
     private List<PrisonerAI> prisonersInCell  = new List<PrisonerAI>();
-    private List<PrisonerAI> outsideQueue     = new List<PrisonerAI>(); // FIFO 대기줄
+    private List<PrisonerAI> outsideQueue     = new List<PrisonerAI>();
     private int nextCellIndex = 0;
 
     public bool IsFull => prisonersInCell.Count >= capacity;
 
-    // 감옥 입구 경유 포인트 (L자 경로용) — outsideQueueStart 앞
-    public Transform PrisonEntrance => outsideQueueStart;
+    // 감옥 입구 경유 포인트 — outsideQueueStart의 MarkerVis 위치 사용
+    public Vector3 PrisonEntrancePos
+    {
+        get
+        {
+            if (outsideQueueStart == null) return Vector3.zero;
+            var mv = outsideQueueStart.Find("MarkerVis");
+            return mv != null ? mv.position : outsideQueueStart.position;
+        }
+    }
+
+    // cellRoot의 실제 기준 위치 (MarkerVis 반영)
+    private Vector3 CellGridOrigin
+    {
+        get
+        {
+            if (cellRoot == null) return Vector3.zero;
+            var mv = cellRoot.Find("MarkerVis");
+            return mv != null ? mv.position : cellRoot.position;
+        }
+    }
 
     void Start()
     {
@@ -34,8 +57,11 @@ public class CellManager : MonoBehaviour
 
         int col = nextCellIndex % 5;
         int row = nextCellIndex / 5;
-        Vector3 offset = new Vector3(col * 1.5f, 0f, -row * 1.5f);
-        Vector3 pos    = cellRoot.position + cellRoot.rotation * offset;
+
+        // cellRoot.rotation 반영, MarkerVis 위치를 그리드 원점으로 사용
+        Vector3 offset = new Vector3(col * 1.5f, 0f, row * 1.5f);
+        Vector3 pos    = CellGridOrigin + cellRoot.rotation * offset;
+        pos.y          = PRISONER_Y_OFFSET; // 수감자가 바닥에 서도록
 
         GameObject slot = new GameObject($"CellSlot_{nextCellIndex}");
         slot.transform.position = pos;
@@ -69,7 +95,6 @@ public class CellManager : MonoBehaviour
         ProcessOutsideQueue();
     }
 
-    // 대기 중인 수감자들을 FIFO로 처리하고, 남은 인원 위치 재배정
     private void ProcessOutsideQueue()
     {
         while (outsideQueue.Count > 0 && !IsFull)
@@ -81,25 +106,28 @@ public class CellManager : MonoBehaviour
             if (cellPos != null)
             {
                 front.OnCellAvailable(cellPos);
-
-                // 뒤에 남은 수감자들을 한 칸씩 앞으로 이동
                 for (int i = 0; i < outsideQueue.Count; i++)
                     outsideQueue[i].MoveToQueuePosition(BuildQueueSlot(i));
             }
             else
             {
-                outsideQueue.Insert(0, front); // 슬롯 부족 → 다시 맨 앞으로
+                outsideQueue.Insert(0, front);
                 break;
             }
         }
     }
 
-    // 줄의 i번째 위치 Transform 생성
+    // 외부 대기줄 i번째 Transform — outsideQueueStart의 MarkerVis 위치 기준
     private Transform BuildQueueSlot(int index)
     {
-        Vector3 origin = outsideQueueStart != null
-            ? outsideQueueStart.position
-            : transform.position + Vector3.back * 3f;
+        Vector3 origin = PrisonEntrancePos;
+        if (outsideQueueStart != null)
+        {
+            // MarkerVis가 없는 경우 outsideQueueStart 자체 위치 fallback
+            var mv = outsideQueueStart.Find("MarkerVis");
+            if (mv == null) origin = outsideQueueStart.position;
+        }
+
         Vector3 dir = outsideQueueStart != null
             ? outsideQueueStart.forward
             : Vector3.forward;
@@ -118,44 +146,47 @@ public class CellManager : MonoBehaviour
 #if UNITY_EDITOR
     void OnDrawGizmos()
     {
-        // ── 감방 슬롯 미리보기 (5×4 초록 와이어박스) ─────────────────
+        // ── 감방 슬롯 미리보기 ─────────────────────────────────────
         if (cellRoot != null)
         {
+            Vector3 origin = CellGridOrigin;
             for (int i = 0; i < 20; i++)
             {
                 int col = i % 5, row = i / 5;
-                Vector3 offset = new Vector3(col * 1.5f, 0f, -row * 1.5f);
-                Vector3 pos    = cellRoot.position + cellRoot.rotation * offset;
+                Vector3 offset = new Vector3(col * 1.5f, 0f, row * 1.5f);
+                Vector3 pos    = origin + cellRoot.rotation * offset;
+                pos.y          = PRISONER_Y_OFFSET;
                 float t = (float)row / 3f;
                 Gizmos.color = Color.Lerp(new Color(0.2f, 1f, 0.3f, 0.8f),
                                           new Color(0.1f, 0.4f, 0.2f, 0.5f), t);
                 Gizmos.DrawWireCube(pos, new Vector3(0.9f, 1.8f, 0.9f));
             }
+            // MarkerVis 위치 표시
+            var mv = cellRoot.Find("MarkerVis");
             Gizmos.color = Color.green;
-            Gizmos.DrawSphere(cellRoot.position, 0.35f);
-            UnityEditor.Handles.Label(cellRoot.position + Vector3.up,
-                "CellRoot (5×4)");
+            Vector3 markPos = mv != null ? mv.position : cellRoot.position;
+            Gizmos.DrawSphere(markPos, 0.35f);
+            UnityEditor.Handles.Label(markPos + Vector3.up, "CellGrid Origin (MV)");
         }
 
-        // ── 외부 대기줄 미리보기 (보라 와이어박스 × 5칸) ─────────────
+        // ── 외부 대기줄 미리보기 ──────────────────────────────────
         if (outsideQueueStart != null)
         {
+            Vector3 origin = PrisonEntrancePos;
             Vector3 dir = outsideQueueStart.forward;
             for (int i = 0; i < 5; i++)
             {
-                Vector3 pos = outsideQueueStart.position + dir * (i * queueSpacing);
+                Vector3 pos = origin + dir * (i * queueSpacing);
+                pos.y = PRISONER_Y_OFFSET;
                 float t = i / 4f;
                 Gizmos.color = Color.Lerp(new Color(1f, 0.3f, 1f, 0.9f),
                                           new Color(0.5f, 0.1f, 0.5f, 0.4f), t);
                 Gizmos.DrawWireCube(pos, new Vector3(0.7f, 1.8f, 0.5f));
-                UnityEditor.Handles.Label(pos + Vector3.up * 1.2f, $"Wait {i+1}");
+                UnityEditor.Handles.Label(pos + Vector3.up * 1.2f, $"Wait {i + 1}");
             }
             Gizmos.color = new Color(1f, 0f, 1f);
-            Gizmos.DrawSphere(outsideQueueStart.position, 0.35f);
-            // 방향 화살표
-            Gizmos.color = new Color(1f, 0.5f, 1f, 0.6f);
-            Gizmos.DrawLine(outsideQueueStart.position,
-                            outsideQueueStart.position + dir * (5 * queueSpacing));
+            Gizmos.DrawSphere(origin, 0.35f);
+            UnityEditor.Handles.Label(origin + Vector3.up * 0.5f, "PrisonEntrance(MV)");
         }
     }
 #endif
