@@ -173,6 +173,10 @@ public class PlayerStackManager : MonoBehaviour
             if (stackedItems[i] != null && stackedItems[i].ItemType == type)
                 sameTypeCount++;
 
+        // 돈은 세로(Y) 대신 가로(Z) 방향으로 펼쳐 쌓음
+        if (type == ItemType.Cash)
+            return new Vector3(0.28f, 0.10f, sameTypeCount * 0.08f);
+
         return new Vector3(baseX, sameTypeCount * itemSpacingY, 0f);
     }
 }
