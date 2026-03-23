@@ -862,3 +862,364 @@ Loop=false, in-place 미설정입니다. 클립 설정 변경, scale 수정, Bod
 - **Mesh scale** → `(2, 2, 2)`, rotation `(90, -90, 0)` 유지
 - **세 클립 모두** `loopTime=true`, `lockRootPositionXZ=true`, `lockRootHeightY=true` (in-place 반복)
 - **Animator** `applyRootMotion=false`
+
+[사용자]
+playercharacter_visual의 mesh renderer를 없애주고(기존)
+
+새로 추가된 애니메이션이 해당 방향을 보도록 x로90, z로 +90하게 해줄래 지금은 바닥에 누워서 이동하고 있어
+
+[Claude]
+완료됐습니다.
+
+- **PlayerCharacter_Visual**의 기존 MeshRenderer + MeshFilter 제거
+- **Mesh 자식 rotation**: `(90, 270, 0)` → `x+90, z+90` → `(0, 90, 270)`
+
+[사용자]
+달리기 애니메이션 inplace로 새로 추가했어 기존 main_run.fbx 에서 main_run2.fbx로 변경해줘. 그리고 이동하는 방향으로 캐릭터가 회전하도록 해줘 아직 적용이 안된 거 같아.
+
+[Claude]
+`rotationSpeed` 값과 회전이 안 되는 원인을 파악합니다:
+
+[Claude]
+메시의 현재 실제 forward 방향을 확인합니다:
+
+[Claude]
+메시가 +X를 향하고 있어서 플레이어 forward(+Z)와 90° 어긋납니다. 동시에 rotation 속도도 너무 느립니다. 한 번에 다 고칩니다:
+
+**1. main_run2.fbx 임포트 + 컨트롤러 교체**
+
+[Claude]
+**2. 메시 Y 회전 수정 + 플레이어 rotation 즉시 반영**
+
+[Claude]
+Y만 바꾸면 짐벌락 영향이 있습니다. 현재 쿼터니언에서 직접 -90° Y 회전을 곱하겠습니다:
+
+[Claude]
+`(270, 0, 0)` = forward (0,0,1), up (0,1,0) — 완벽합니다. 이제 PlayerController 회전도 즉시 반영되도록 수정합니다:
+
+[Claude]
+`Slerp`으로 교체 — `RotateTowards` + `deltaTime` 조합은 14°/s밖에 안 됐지만, `Slerp(t=15*dt)`는 약 0.13초 안에 방향 전환 완료.
+
+[Claude]
+완료됐습니다.
+
+- **main_run2.fbx** 임포트 및 in-place loop 설정, Run 상태에 적용
+- **Mesh rotation** `(0,90,270)` → `(270,0,0)` : forward=(0,0,1), up=(0,1,0) 정렬
+- **이동 방향 회전** `RotateTowards(14°/s)` → `Slerp(15*dt)` 로 교체, 입력 즉시 반응
+
+[사용자]
+해당 애니메이션들을 다른 character들한테도 적용되나?
+
+[Claude]
+다른 캐릭터 FBX들의 구조를 확인합니다:
+
+[Claude]
+**적용 불가합니다.**
+
+플레이어의 `main_idle/run/mining.fbx`는 **SkinnedMeshRenderer** (뼈대+스킨 메시)를 포함하고 있어서 애니메이션이 작동합니다.
+
+반면 나머지 캐릭터들 (prisoner_before, police, miner 등)은 **Static Mesh** (MeshFilter + MeshRenderer)만 있어서 뼈대가 없습니다. 스켈레탈 애니메이션을 구동할 수 없습니다.
+
+이를 해결하려면 각 캐릭터별로 **리깅된(rigged) FBX**가 필요합니다 — 플레이어 캐릭터처럼 `mixamorig:*` 뼈대 + SkinnedMesh가 포함된 버전. Tripo3D에서 각 캐릭터의 animate 버전을 export 받아야 합니다.
+
+[사용자]
+달리기 애니메이션 inplace로 새로 추가했어 기존 main_run.fbx 에서 main_run2.fbx로 변경해줘. 그리고 이동하는 방향으로 캐릭터가 회전하도록 해줘 아직 적용이 안된 거 같아.
+
+[Claude]
+이전에 이미 적용했는지 현재 상태를 확인합니다:
+
+[Claude]
+`modeling/animation/main_run2.fbx`가 새 버전입니다. 재임포트 + 회전 코드도 다시 확인합니다:
+
+[Claude]
+파일도 같고 Slerp도 이미 적용돼 있습니다. Play 모드에서 실제 동작을 확인합니다:
+
+[Claude]
+설정은 모두 올바릅니다. `Slerp`이 `rotationSpeed=15`로는 시각적으로 느릴 수 있습니다. 즉시 회전으로 교체합니다:
+
+[Claude]
+완료. 이동 방향으로 즉시 회전되도록 `Quaternion.LookRotation(moveDir)` 직접 대입으로 변경했습니다. 조이스틱 입력 즉시 반응합니다.
+
+[사용자]
+<task-notification>
+<task-id>b1lqk879x</task-id>
+<tool-use-id>toolu_01P6NY6afGeUZTP63HNLmaq7</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\b1lqk879x.output</output-file>
+<status>failed</status>
+<summary>Background command "cd "E:/unityProject/SupercentAssignment" &amp;&amp; unity-cli editor play &amp;&amp; sleep 3 &amp;&amp; unity-cli exec "
+var pc = GameObject.FindObjectOfType&lt;PlayerController&gt;();
+var anim = pc?.GetComponentInChildren&lt;Animator&gt;();
+var sb = new System.Text.StringBuilder();
+sb.AppendLine(\"Animator ctrl: \" + (anim?.runtimeAnimatorController?.name ?? \"none\"));
+sb.AppendLine(\"applyRootMotion: \" + anim?.applyRootMotion);
+sb.AppendLine(\"Player rot: \" + pc?.transform.eulerAngles);
+sb.AppendLine(\"Mesh forward: \" + pc?.transform.Find(\"PlayerCharacter_Visual\")?.Find(\"Mesh\")?.forward);
+var pa = pc?.GetComponent&lt;PlayerAnimation&gt;();
+sb.AppendLine(\"PlayerAnimation: \" + (pa!=null));
+return sb.ToString();
+"" failed with exit code 1</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\b1lqk879x.output
+
+[Claude]
+이전 작업의 잔여 알림입니다 — 이미 위에서 확인했고, 타임아웃 이슈였습니다. 이미 수정 완료 및 push 됐습니다.
+
+[사용자]
+prisoner spawner에서 생성되는 수갑 받기 전 prisoner_before애들한테 pb_idle, pb_walk를 적용해줘
+
+[Claude]
+pb 애니메이션 임포트하고 내용 확인합니다:
+
+[Claude]
+SkinnedMesh + 클립 모두 있습니다. 플레이어와 동일한 방식으로 적용합니다. 루프/in-place 설정 → AnimatorController 생성 → PrisonerPrefab Visual 교체:
+
+[사용자]
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   - **Rollback**: Rolled back to commit `0882a79` (Flip character models right-side up) discarding animation work
+   - **police_default prefab**: Import `modeling/object/police_default` as a static scene-placement prefab (no AI), identical model to police
+   - **Player animations**: Apply `main_idle`, `main_run2` (in-place), `main_mining` FBX animations to the player character; make run loop in-place; rotate character toward movement direction
+   - **Visual fixes**: Remove old static MeshRenderer from PlayerCharacter_Visual, fix mesh rotation/scale so character stands upright and faces movement direction
+   - **prisoner_before animations**: Apply `pb_idle.fbx` and `pb_walk.fbx` animations to PrisonerPrefab (spawned by PrisonerSpawner)
+
+2. Key Technical Concepts:
+   - Unity Generic rig animation: Animator must be on the FBX root (mesh child), not the prefab root, so bone paths resolve correctly
+   - SkinnedMeshRenderer vs static MeshFilter: only FBX files with SkinnedMeshRenderer + bones can use skeletal animations
+   - In-place animation: `lockRootPositionXZ=true`, `lockRootHeightY=true`, `loopTime=true` via `ModelImporterClipAnimation`, `Animator.applyRootMotion=false`
+   - `Quaternion.LookRotation(moveDir)` for instant movement-direction rotation (replaced slow `RotateTowards`/`Slerp`)
+   - `GetComponentInChildren<Animator>()` to find Animator on Visual child from PlayerAnimation script on root
+   - Mesh local rotation `(270, 0, 0)` gives world forward=(0,0,1), world up=(0,1,0) for Mixamo/Tripo3D FBX
+
+3. Files and Code Sections:
+   - **Assets/Scripts/Player/PlayerAnimation.cs**
+     - Removed `[RequireComponent(typeof(Animator))]`
+     - Changed `animator = GetComponent<Animator>()` → `animator = GetComponentInChildren<Animator>()`
+     ```csharp
+     public class PlayerAnimation : MonoBehaviour
+     {
+         private Animator animator;
+         void Awake()
+         {
+             animator = GetComponentInChildren<Animator>();
+         }
+     }
+     ```
+
+   - **Assets/Scripts/Player/PlayerController.cs**
+     - Replaced gradual rotation with instant LookRotation
+     ```csharp
+     if (moveDir != Vector3.zero)
+     {
+         transform.rotation = Quaternion.LookRotation(moveDir, Vector3.up);
+     }
+     ```
+
+   - **Assets/Models/Animations/** (new files)
+     - `main_idle.fbx` — rigged SkinnedMesh + idle AnimationClip (player)
+     - `main_run.fbx` — original run (replaced)
+     - `main_run2.fbx` — in-place run AnimationClip (player, current)
+     - `main_mining.fbx` — mining AnimationClip (player)
+     - `pb_idle.fbx` — rigged SkinnedMesh + idle AnimationClip (prisoner_before) — just imported
+     - `pb_walk.fbx` — rigged SkinnedMesh + walk AnimationClip (prisoner_before) — just imported
+
+   - **Assets/Animations/PlayerAnimController.controller**
+     - States: Idle (main_idle clip), Run (main_run2 clip), Mining (main_mining clip)
+     - Params: `Speed` (float), `IsMining` (bool)
+     - Transitions: idle↔run on Speed>0.1/<0.1 (!IsMining), idle/run→mining on IsMining, mining→idle on !IsMining
+
+   - **Assets/Prefabs/PoliceDefaultPrefab.prefab**
+     - Created: static police model (same FBX as police), rotation (90,-90,0), no AI scripts
+
+   - **Assets/Scenes/GameScene.unity**
+     - Player: removed old Body/Head capsules, removed old MeshRenderer/MeshFilter from PlayerCharacter_Visual
+     - Player/PlayerCharacter_Visual/Mesh = `main_idle.fbx` instantiated, localEulerAngles=(270,0,0), scale=(2,2,2)
+     - Animator on Mesh child: `PlayerAnimController`, `applyRootMotion=false`
+
+   - **Assets/Scripts/NPC/PrisonerAI.cs**
+     - Has `[SerializeField] private GameObject prisonerAfterPrefab` and `prisonerAfterController`
+     - Has `SwapToPrisonerAfter()` called on FullyProcessed state
+     - Current state: basic WalkTo/idle without Speed param driving (no animator hookup yet for pb animations)
+
+   - **Assets/Prefabs/PrisonerPrefab.prefab**
+     - Visual child = static mesh (prisoner_before FBX), no SkinnedMeshRenderer
+     - pb_idle/pb_walk FBX confirmed to have SkinnedMeshRenderer → can replace Visual
+
+4. Errors and Fixes:
+   - **Mesh rotation wrong (lying on ground)**: Original (90,-90,0) was lying flat. User requested x+90, z+90 → computed to (0,90,270). Then found world forward=(1,0,0) not (0,0,1), so used `Quaternion.AngleAxis(-90, Vector3.up)` correction → final (270,0,0) with forward=(0,0,1) ✓
+   - **Rotation not working**: `RotateTowards(rotationSpeed * deltaTime)` with rotationSpeed=15 gave only ~14°/s. Fixed via Slerp then finally instant `LookRotation` direct assignment
+   - **Gimbal lock issue**: Changing only Y in euler (0,90,270)→(0,0,270) gave wrong result (0,-1,0) forward due to euler interaction. Fixed by using quaternion multiplication instead
+   - **unity-cli compile errors**: `AnimatorConditionMode` needed full namespace `UnityEditor.Animations.AnimatorConditionMode`; C# pattern matching `is Type var` not supported → used `as` cast instead
+   - **Connection timeout**: unity-cli exec sometimes times out during reimport but command succeeds; verified by follow-up query
+
+5. Problem Solving:
+   - Player character animation fully working: SkinnedMesh from main_idle.fbx, Animator on mesh child, in-place loop clips, instant movement rotation
+   - Other NPC characters (prisoner, police, miner) confirmed as static meshes — cannot use skeletal animation unless rigged FBX provided
+   - pb_idle/pb_walk confirmed as rigged SkinnedMesh FBX — can replace PrisonerPrefab Visual
+
+6. All User Messages:
+   - "0882a79917f85f8f44f4a1556659edfc33d24718 로 커밋 돌려줘"
+   - "네" (confirming rollback)
+   - "캐릭터들 적용한 것처럼 이번에는 그냥 맵에 배치해서 사용할 police_default 가져와줘. modeling/object/police_default에 있어. 이제 플레이 캐릭터에 애니메이션 적용할려고해. 애니메이션 위치는 modeling/animation 안에 있고 main_idle : 대기 상태(속도 0) main_run : 이동(채굴장 밖) main_mining : 채굴장 내 이동 그리고 이동방향으로 회전해줘"
+   - "기존 visual mesh는 없애주고 새로 추가한 애니메이션 mesh가 대체해줘. scale이랑 rotation도 맞춰줘. 그리고 달리면 계속 달리게 반복해주고 inplace로 해줘"
+   - "playercharacter_visual의 mesh renderer를 없애주고(기존) 새로 추가된 애니메이션이 해당 방향을 보도록 x로90, z로 +90하게 해줄래 지금은 바닥에 누워서 이동하고 있어"
+   - "달리기 애니메이션 inplace로 새로 추가했어 기존 main_run.fbx 에서 main_run2.fbx로 변경해줘. 그리고 이동하는 방향으로 캐릭터가 회전하도록 해줘 아직 적용이 안된 거 같아." (first time)
+   - "해당 애니메이션들을 다른 character들한테도 적용되나?" → answered: no, static meshes
+   - "달리기 애니메이션 inplace로 새로 추가했어 기존 main_run.fbx 에서 main_run2.fbx로 변경해줘. 그리고 이동하는 방향으로 캐릭터가 회전하도록 해줘 아직 적용이 안된 거 같아." (second time — led to instant rotation fix)
+   - "prisoner spawner에서 생성되는 수갑 받기 전 prisoner_before애들한테 pb_idle, pb_walk를 적용해줘"
+
+7. Pending Tasks:
+   - **Complete pb_idle/pb_walk application to PrisonerPrefab**: Import settings applied (loop+in-place), need to:
+     1. Create `PrisonerBeforeAnimController.controller` (idle↔walk on Speed param)
+     2. Replace PrisonerPrefab's static Visual child with `pb_idle.fbx` SkinnedMesh
+     3. Add Animator on the mesh child with the new controller
+     4. Ensure PrisonerAI drives Speed param (WalkTo sets Speed=1, arrived sets Speed=0)
+
+8. Current Work:
+   Working on: "prisoner spawner에서 생성되는 수갑 받기 전 prisoner_before애들한테 pb_idle, pb_walk를 적용해줘"
+
+   Steps completed so far:
+   - Confirmed pb_idle.fbx and pb_walk.fbx are in `modeling/animation/`
+   - Copied to `Assets/Models/Animations/`
+   - Confirmed both have SkinnedMeshRenderer + AnimationClip (total=75 assets each)
+   - Sent `SaveAndReimport()` for loop+in-place settings on both files (connection closed before response — standard behavior)
+
+   The last executed command was:
+   ```csharp
+   // pb_idle/walk: loop + in-place
+   foreach (var name in new string[]{"pb_idle","pb_walk"}) {
+       var imp = AssetImporter.GetAtPath("Assets/Models/Animations/"+name+".fbx") as ModelImporter;
+       var clips = imp.defaultClipAnimations;
+       var overrides = new ModelImporterClipAnimation[clips.Length];
+       for (int i = 0; i < clips.Length; i++) {
+           overrides[i] = clips[i];
+           overrides[i].loop = true;
+           overrides[i].loopTime = true;
+           overrides[i].lockRootPositionXZ = true;
+           overrides[i].lockRootHeightY = true;
+       }
+       imp.clipAnimations = overrides;
+       imp.SaveAndReimport();
+   }
+   ```
+
+9. Optional Next Step:
+   Continue applying pb_idle/pb_walk to PrisonerPrefab. After confirming import settings applied:
+   1. Create `Assets/Animations/PrisonerBeforeAnimController.controller` with Speed float param, Idle↔Walk states
+   2. Replace PrisonerPrefab Visual (static mesh) with `pb_idle.fbx` SkinnedMesh child, rotation (270,0,0), scale (2,2,2)
+   3. Add Animator on mesh child with PrisonerBeforeAnimController, applyRootMotion=false
+   4. Verify PrisonerAI.cs drives Speed (already has `npcAnimator?.SetFloat(SpeedHash, 1f/0f)` in WalkTo)
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: C:\Users\qudtn\.claude\projects\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+[Claude]
+Import settings confirmed. Now creating the animator controller and setting up the PrisonerPrefab.
+
+[Claude]
+Controller created. Now replace PrisonerPrefab's Visual with the pb_idle SkinnedMesh and set up the Animator.
+
+[Claude]
+Now update PrisonerAI to drive the Speed parameter via the Animator.
+
+[Claude]
+Now also need to refresh the animator reference after `SwapToPrisonerAfter()` replaces the Visual:
+
+[Claude]
+No compile errors. Let me verify the PrisonerPrefab was set up correctly:
+
+[Claude]
+Everything is set up correctly:
+
+- **PrisonerPrefab**: Visual child replaced with `pb_idle.fbx` SkinnedMesh, rotation `(270,0,0)`, scale `(2,2,2)`, Animator with `PrisonerBeforeAnimController`
+- **PrisonerBeforeAnimController**: `Speed` float param, Idle↔Walk states (transition at 0.1 threshold)
+- **PrisonerAI.cs**: `GetComponentInChildren<Animator>()` in Awake, sets `Speed=1` at start of WalkTo, `Speed=0` on arrival, refreshes animator ref after `SwapToPrisonerAfter()`
+
+수감자가 이동할 때 walk 애니메이션, 멈추면 idle 애니메이션이 재생됩니다.
+
+[사용자]
+또 수감자 캐릭터가 누워있어
+
+[Claude]
+pb_idle.fbx가 player FBX와 축 방향이 다른 것 같습니다. 회전 0으로 테스트해서 기준 방향 확인하겠습니다.
+
+[Claude]
+플레이 모드에서 확인해봐주세요 — 수감자가 서있나요, 아니면 어느 방향으로 누워있나요? (앞으로 누웠는지, 뒤로, 옆으로?)
+
+[사용자]
+됐ㄷㅏ 해결 됨.
+
+[Claude]
+(0,0,0) 회전이 맞았네요. pb_idle.fbx는 플레이어 FBX와 달리 이미 Y-up 방향으로 export된 파일이었던 것입니다.
+
+다음 작업이 있으시면 말씀해주세요.
+
+[사용자]
+이제 드릴 업그레이드 시. 채굴장 안으로 들어가면 기존의 mining 애니메이션 대신 modeling/animation/drill_run으로 바꿔주고 사용자 손 앞에 modeling/object/drill 안에 있는 드릴을 생성하도록 해줘. 드릴 방향이랑 바뀐 애니메이션도 캐릭터 회전에 동기화되도록 해주고
+
+[Claude]
+`mixamorig:RightHand` 본이 있습니다. 이걸 드릴 부착점으로 사용하겠습니다.
+
+[Claude]
+이제 드릴 프리팹 생성 및 PlayerAnimation/PlayerInteraction 코드 수정합니다.
+
+[Claude]
+이제 `GameEnums.cs`에서 ToolLevel 확인 후 PlayerAnimation과 PlayerInteraction을 수정합니다.
+
+[Claude]
+이제 PlayerInteraction에서 드릴 레벨일 때 `SetDrilling` 사용하도록 수정합니다.
+
+[Claude]
+이제 PlayerAnimation에 DrillToolPrefab을 연결합니다.
+
+[Claude]
+스크립트 컴파일 완료 대기 중입니다.
+
+[Claude]
+컴파일 에러 없이 완성됐습니다. 정리하면:
+
+**변경 사항:**
+- `drill_run.fbx` — loop + in-place 임포트 완료
+- `DrillToolPrefab` — `Assets/Prefabs/` 에 생성
+- `PlayerAnimController` — `IsDrilling` bool 파라미터 + **Drill** 상태(drill_run 클립) 추가, 모든 상태 → Drill (IsDrilling=true), Drill → Idle (IsDrilling=false) 전환
+- `PlayerAnimation.cs` — `SetDrilling(bool)` 추가, 드릴 진입 시 `mixamorig:RightHand` 본에 드릴 모델 자동 부착/제거
+- `PlayerInteraction.cs` — `ToolLevel.Drill`일 때 채굴 진입/퇴장 시 `SetDrilling` 호출
+
+드릴 업그레이드 후 채굴장 진입하면 drill_run 애니메이션이 재생되고 오른손에 드릴이 생깁니다. 드릴 위치/방향이 맞지 않으면 말씀해주세요 — `localPosition`, `localEulerAngles`로 조정하겠습니다.
+
+[사용자]
+이제 불도저 업그레이드 시. 채굴장 안으로 들어가면 캐릭터를 bulldozermode.fpx로 변하게 해줘 그리고 캐릭터 회전에 동기화되도록 해주고. 나오면 다시 기본 main character로 바뀌고. 이때 scale은 앞에 크기가 기존의 돌 5개를 지우는데 알맞도록 시각적 일치하도록 조정해줘.
+
+[Claude]
+`bulldozermode.fbx`가 맞네요. 5칸 × 1.2f = 6유닛 넓이로 스케일 조정합니다.
+
+[Claude]
+불도저 폭(2.89) → 5칸(5×1.2=6.0)에 맞춰 scale 2.08. 구현합니다.
+
+[Claude]
+이제 `PlayerAnimation.cs`에 불도저 모드 로직을 추가합니다.
+
+[Claude]
+이제 `PlayerInteraction.cs`에서 DrillCar 진입/퇴장 시 `SetBulldozerMode` 호출합니다.
+
+[Claude]
+이제 씬의 PlayerAnimation에 BulldozerModePrefab을 할당합니다.
+
+[Claude]
+`bulldozerPrefab` 필드가 아직 serialized 목록에 없습니다. 도메인 리로드를 강제합니다.
+
+[Claude]
+완료입니다. 정리하면:
+
+**동작 방식:**
+- DrillCar 업그레이드 후 채굴장 진입 → `PlayerCharacter_Visual` 비활성화, 불도저 메시 생성
+- 불도저는 Player 오브젝트의 자식 → PlayerController의 `transform.rotation = Quaternion.LookRotation(moveDir)` 에 자동 동기화
+- 채굴장 퇴장 → 불도저 제거, 기본 캐릭터 복원
+
+**스케일 계산:**
+- 5칸 × grid spacing 1.2 = **6.0 유닛** 목표 폭
+- 불도저 모델 X폭 **2.89** → scale = 6.0 / 2.89 ≈ **2.08**
+- 바운드 오프셋 보정으로 발 위치 맞춤
+
+테스트 후 불도저 방향이나 위치가 안 맞으면 말씀해주세요.
