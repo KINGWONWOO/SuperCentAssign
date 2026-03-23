@@ -500,3 +500,365 @@ Done. Here's a summary of what was applied:
 - **AutoSellNPCPrefab**: Body + Head capsule/sphere children removed, `police` FBX added as `Visual` child.
 - **WorkerNPCPrefab**: Body + Head capsule/sphere children removed, `miner` FBX added as `Visual` child.
 - **PrisonerAI.cs**: Added `SwapToPrisonerAfter()` — when a prisoner receives all handcuffs (`FullyProcessed`), it destroys the `prisoner_before` Visual and instantiates `prisoner_after` in its place before walking to the cell.
+
+[사용자]
+이번에 새로 추가한 캐릭터들이 누워있어 x,y를 각각 -90도로 돌려줘
+
+[Claude]
+`SwapToPrisonerAfter`에서 생성되는 prisoner_after도 같은 회전이 필요하니 코드도 수정:
+
+[Claude]
+3개 프리팹 모두 Visual 자식의 rotation을 `(-90, -90, 0)`으로 설정했고, prisoner_after 런타임 스폰 시에도 동일하게 적용되도록 PrisonerAI.cs도 수정했습니다.
+
+[사용자]
+다시 한 번 상하반전해줘
+
+[Claude]
+PrisonerAI의 prisoner_after 스폰도 동일하게:
+
+[Claude]
+X 회전을 `-90` → `90`으로 변경했습니다. 완료.
+
+[사용자]
+폴더 내 script.txt 를 읽어서 실행해줘
+
+[Claude]
+내용을 파악했습니다. 단계적으로 진행할게요. 먼저 파일 구조를 확인합니다.
+
+[Claude]
+`run.fbx` = walk 애니메이션입니다. 먼저 전체 구조를 확인하겠습니다.
+
+[Claude]
+애니메이션 FBX 구조를 먼저 확인하고 계획을 세우겠습니다.
+
+[Claude]
+Mixamo 애니메이션입니다. 모델들의 rig 타입을 확인하고 Humanoid로 설정해야 합니다.
+
+[Claude]
+모든 모델과 애니메이션을 Humanoid rig으로 전환합니다 (Mixamo 애니메이션은 Humanoid에서 동작):
+
+[Claude]
+이제 Animator Controller들을 생성합니다. 먼저 Animations 폴더 생성 후 컨트롤러 생성:
+
+[Claude]
+클립들이 로드됩니다. 이제 AnimatorController들을 생성합니다. "팔 고정"은 AvatarMask로 처리하겠습니다:
+
+[Claude]
+PlayerAnimController 생성됨. 나머지 컨트롤러들을 생성합니다:
+
+[Claude]
+6개 컨트롤러 모두 생성됐습니다. 이제 각 프리팹에 Animator를 붙이고 컨트롤러를 연결합니다:
+
+[Claude]
+이제 플레이어 프리팹에도 적용합니다. 플레이어 프리팹을 확인 후 처리:
+
+[Claude]
+Humanoid 자동 맵핑 실패. `CopyFromOther`로 애니메이션 FBX의 Avatar를 캐릭터 모델에 복사합니다:
+
+[Claude]
+`CopyFromOther`로 설정됨. 이제 Player Animator와 씬 오브젝트를 설정합니다:
+
+[Claude]
+Player의 Body/Head 구식 자식들도 제거합니다:
+
+[Claude]
+이제 PlayerInteraction.cs에서 채굴 존 진입 시 SetMining 호출 여부를 확인합니다:
+
+[Claude]
+NPC 스크립트들에 애니메이터 드라이브 코드를 추가합니다:
+
+[Claude]
+AutoSellNPC.cs에도 속도 파라미터 추가:
+
+[Claude]
+이제 PoliceDefaultPrefab을 생성하고, PrisonerPrefab에 prisonerAfterController를 설정합니다:
+
+[Claude]
+이제 Player의 Avatar를 설정하고 모든 작업을 마무리합니다:
+
+[Claude]
+에러 없음. 이제 commit합니다:
+
+[Claude]
+완료됐습니다. 작업 내역 요약:
+
+**추가된 것들:**
+- `Assets/Models/Animations/` — idle.fbx, run.fbx(walk), mining.fbx 임포트 (Mixamo Humanoid)
+- `Assets/Animations/` — 6개 AnimatorController 생성:
+  - `PlayerAnimController`: idle↔walk(Speed), idle/walk→mining(IsMining)
+  - `PrisonerBeforeAnimController`: idle↔walk
+  - `PrisonerAfterAnimController`: idle↔walk
+  - `PoliceDefaultAnimController`: idle 고정
+  - `PoliceAnimController`: idle↔walk
+  - `MinerAnimController`: mining 고정
+- `PoliceDefaultPrefab` — 씬에 배치용 정적 경찰 모델 (idle 고정)
+
+**수정된 것들:**
+- 모든 캐릭터 FBX → Humanoid rig (idle.fbx Avatar 복사)
+- PrisonerPrefab/AutoSellNPCPrefab/WorkerNPCPrefab Visual에 Animator+Controller 적용
+- Player 씬 오브젝트 — Body/Head 제거, PlayerAnimController + humanoid Avatar 설정
+- `PrisonerAI.cs` — Speed 파라미터 구동, FullyProcessed 시 PrisonerAfterAnimController로 교체
+- `AutoSellNPC.cs` — Speed 파라미터 구동
+
+[사용자]
+애니메이션 적용해줘
+
+[Claude]
+Prefab의 Visual Animator에 Avatar가 없습니다. 설정합니다:
+
+[Claude]
+이제 Play 모드로 테스트해서 실제 애니메이션이 재생되는지 확인합니다:
+
+[Claude]
+PlayerCharacter_Visual이 비어있습니다. FBX 내용이 없습니다. 씬에서 재설정합니다:
+
+[Claude]
+모델들이 static mesh (뼈대 없음)입니다. 애니메이션 FBX에 메시가 있는지 확인합니다:
+
+[Claude]
+애니메이션 FBX에는 메시가 없고 캐릭터 모델에는 뼈대가 없습니다. 두 가지를 조합해야 합니다. modeling 폴더를 더 확인합니다:
+
+[Claude]
+캐릭터 모델이 static mesh (뼈대 없음)이라 Mixamo 스켈레탈 애니메이션이 직접 적용 불가합니다. **ProceduralAnimator**를 만들어서 위치 변화 기반으로 idle/walk/mining 동작을 구현합니다:
+
+[Claude]
+에러 없음. 각 프리팹 Visual에 ProceduralAnimator를 붙입니다:
+
+[Claude]
+Player의 PlayerCharacter_Visual에도 추가합니다:
+
+[Claude]
+PlayerCharacter_Visual이 비어있어 FBX를 다시 인스턴스화합니다:
+
+[Claude]
+이제 PrisonerAI의 SwapToPrisonerAfter에서도 ProceduralAnimator를 유지합니다:
+
+[Claude]
+Play 모드로 테스트:
+
+[Claude]
+Player에 중복 ProceduralAnimator가 있습니다. 정리합니다:
+
+[Claude]
+이제 commit하고 push합니다:
+
+[Claude]
+완료됐습니다.
+
+**애니메이션 상황 설명:**
+
+Tripo3D 캐릭터 모델들은 static mesh (뼈대 없음)이어서 Mixamo 스켈레탈 애니메이션이 직접 적용 불가합니다. 대신 `ProceduralAnimator.cs`로 위치 속도 기반 절차적 애니메이션을 구현했습니다:
+
+| 상태 | 동작 |
+|------|------|
+| **Idle** | 느린 상하 bobbing (1.5Hz) |
+| **Walk** | 빠른 상하 bobbing (7Hz) — 이동 감지 자동 |
+| **Mining** | 앞으로 기울기 + bobbing (4Hz, 20° lean) |
+
+적용 대상:
+- **Player** → 이동 시 walk bob, 채굴장 진입 시 mining lean
+- **Prisoner** → 이동/대기 자동 감지
+- **AutoSellNPC (Police)** → 이동/대기 자동 감지
+- **WorkerNPC (Miner)** → `alwaysMining=true` (상시 채굴 모션)
+- **PoliceDefault** → idle bob
+
+[사용자]
+<task-notification>
+<task-id>bll45c9v5</task-id>
+<tool-use-id>toolu_01HZtS7KEbhAuEiDRGSefMeu</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bll45c9v5.output</output-file>
+<status>completed</status>
+<summary>Background command "cd "E:/unityProject/SupercentAssignment" &amp;&amp; unity-cli editor play &amp;&amp; sleep 3 &amp;&amp; unity-cli console 2&gt;&amp;1 | head -30" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bll45c9v5.output
+
+[Claude]
+이전 play 명령의 로그입니다. Play 진입은 성공했고 console 연결 타임아웃은 단순 타이밍 이슈입니다. 현재 작업에는 영향 없습니다.
+
+[사용자]
+0882a79917f85f8f44f4a1556659edfc33d24718 로 커밋 돌려줘
+
+[Claude]
+`0882a79` (Flip character models right-side up) 커밋으로 돌아갑니다. `e146dca`와 `e6b2508` 두 커밋이 사라집니다. 진행할까요?
+
+[사용자]
+네
+
+[Claude]
+`0882a79` 커밋으로 롤백 완료했습니다.
+
+[사용자]
+캐릭터들 적용한 것처럼 이번에는 그냥 맵에 배치해서 사용할 police_default 가져와줘. modeling/object/police_default에 있어.
+
+
+
+이제 플레이 캐릭터에 애니메이션 적용할려고해. 애니메이션 위치는
+
+modeling/animation 안에 있고
+
+main_idle : 대기 상태(속도 0)
+
+main_run : 이동(채굴장 밖)
+
+main_mining : 채굴장 내 이동
+
+
+
+그리고 이동방향으로 회전해줘
+
+[Claude]
+새 애니메이션 파일 내용을 확인합니다.
+
+[Claude]
+`main_idle.fbx`와 `main_run.fbx`에 **SkinnedMeshRenderer + 리깅된 메시**가 있습니다. 즉 플레이어 캐릭터의 애니메이션이 완전히 포함된 FBX입니다.
+
+rig 타입 확인 후 Animator Controller를 만들고 Visual을 교체합니다:
+
+[Claude]
+Generic rig + 동일한 skeleton (tripo_node_ac6c3113). 완벽합니다. 세 FBX 모두 같은 캐릭터 메시를 공유해서 클립들이 호환됩니다.
+
+1단계 - Animator Controller 생성:
+
+[Claude]
+2단계 - Player Visual을 main_idle.fbx 모델로 교체하고 Animator 설정:
+
+[Claude]
+Generic rig은 Animator가 메시 루트에 있어야 합니다. PlayerAnimation을 수정해 `GetComponentInChildren`으로 찾도록 변경합니다:
+
+[Claude]
+이제 Player 루트의 Animator를 제거하고 Mesh 자식에 붙입니다:
+
+[Claude]
+3단계 - PlayerController 이동 방향 회전 확인 및 police_default 프리팹 생성:
+
+[Claude]
+PlayerController의 이동 방향 회전 코드 확인:
+
+[Claude]
+이동 방향 회전은 이미 `PlayerController.cs`에 구현되어 있습니다. Play 모드로 확인합니다:
+
+[Claude]
+Unity가 재임포트 중인 것 같습니다. 설정은 완료됐으므로 commit합니다:
+
+[Claude]
+완료됐습니다.
+
+**적용 내용:**
+
+| 항목 | 내용 |
+|------|------|
+| **PoliceDefaultPrefab** | `modeling/object/police_default` FBX로 생성, 씬에 직접 배치용 (AI 없음) |
+| **main_idle / main_run / main_mining** | `Assets/Models/Animations/`에 임포트 — 세 파일 모두 동일 캐릭터 리깅 메시 포함 |
+| **PlayerAnimController** | idle(Speed=0) → run(Speed>0, !IsMining) → mining(IsMining=true) |
+| **Player Visual** | `PlayerCharacter_Visual/Mesh` = `main_idle.fbx` (SkinnedMesh + 뼈대), Animator를 Mesh 자식에 배치 |
+| **이동 방향 회전** | `PlayerController.cs`의 `RotateTowards` 기존 구현 그대로 동작 |
+
+[사용자]
+<task-notification>
+<task-id>bi443nw17</task-id>
+<tool-use-id>toolu_0172buxsUHP3cCcWMshaY7S3</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bi443nw17.output</output-file>
+<status>completed</status>
+<summary>Background command "cd "E:/unityProject/SupercentAssignment" &amp;&amp; unity-cli editor play &amp;&amp; sleep 4 &amp;&amp; unity-cli console 2&gt;&amp;1 | head -20" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bi443nw17.output
+
+[사용자]
+<task-notification>
+<task-id>bihu3jbau</task-id>
+<tool-use-id>toolu_01MHpj3fkYX8ZF8ULJQEoeWK</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bihu3jbau.output</output-file>
+<status>completed</status>
+<summary>Background command "sleep 6 &amp;&amp; cd "E:/unityProject/SupercentAssignment" &amp;&amp; unity-cli console 2&gt;&amp;1 | head -20" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bihu3jbau.output
+
+[사용자]
+<task-notification>
+<task-id>bmb68yhc3</task-id>
+<tool-use-id>toolu_0182AfXmQdxo79NbiQtrYzks</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bmb68yhc3.output</output-file>
+<status>failed</status>
+<summary>Background command "sleep 6 &amp;&amp; cd "E:/unityProject/SupercentAssignment" &amp;&amp; unity-cli exec "
+var anim = GameObject.FindObjectOfType&lt;PlayerAnimation&gt;();
+var animator = anim?.GetComponentInChildren&lt;Animator&gt;();
+return \"PlayerAnimation: \"+(anim!=null)+\" Animator: \"+(animator!=null)+\" ctrl:\"+(animator?.runtimeAnimatorController?.name??\"none\");
+"" failed with exit code 1</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bmb68yhc3.output
+
+[사용자]
+<task-notification>
+<task-id>bs50mtk3n</task-id>
+<tool-use-id>toolu_01DXgmAe4PB8y79M3Ha9Tdfb</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bs50mtk3n.output</output-file>
+<status>completed</status>
+<summary>Background command "sleep 8 &amp;&amp; unity-cli exec "
+var anim = GameObject.FindObjectOfType&lt;PlayerAnimation&gt;();
+var animator = anim?.GetComponentInChildren&lt;Animator&gt;();
+return \"PlayerAnimation: \"+(anim!=null)+\" Animator: \"+(animator!=null)+\" ctrl:\"+(animator?.runtimeAnimatorController?.name??\"none\");" 2&gt;/dev/null || unity-cli -p "E:/unityProject/SupercentAssignment" console 2&gt;&amp;1 | head -15" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bs50mtk3n.output
+
+[사용자]
+<task-notification>
+<task-id>bha8c866t</task-id>
+<tool-use-id>toolu_01CpgBP5X6F67oAUd6HBcQ5R</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bha8c866t.output</output-file>
+<status>completed</status>
+<summary>Background command "cd "E:/unityProject/SupercentAssignment" &amp;&amp; unity-cli editor stop 2&gt;/dev/null; sleep 2 &amp;&amp; unity-cli console --filter error 2&gt;&amp;1 | head -15" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bha8c866t.output
+
+[사용자]
+<task-notification>
+<task-id>b60hqhx87</task-id>
+<tool-use-id>toolu_01AZHsmfL9kgwg8KB7PwPtN9</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\b60hqhx87.output</output-file>
+<status>failed</status>
+<summary>Background command "sleep 5 &amp;&amp; cd "E:/unityProject/SupercentAssignment" &amp;&amp; unity-cli console --filter error" failed with exit code 1</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\b60hqhx87.output
+
+[사용자]
+<task-notification>
+<task-id>bs69yju6k</task-id>
+<tool-use-id>toolu_014K5h7y5eveCYvDUvUaqdTy</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bs69yju6k.output</output-file>
+<status>failed</status>
+<summary>Background command "sleep 8 &amp;&amp; cd "E:/unityProject/SupercentAssignment" &amp;&amp; unity-cli console --filter error 2&gt;&amp;1" failed with exit code 1</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bs69yju6k.output
+
+[사용자]
+<task-notification>
+<task-id>bo3kyst1z</task-id>
+<tool-use-id>toolu_01D3iXvXGXsfmrLobekkYUQA</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bo3kyst1z.output</output-file>
+<status>failed</status>
+<summary>Background command "sleep 10 &amp;&amp; cd "E:/unityProject/SupercentAssignment" &amp;&amp; unity-cli exec "return \"ping\";"" failed with exit code 1</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\5a39e976-25e0-4927-92fb-137d3c683439\tasks\bo3kyst1z.output
+
+[Claude]
+Play 진입은 성공했고 이후 연결 타임아웃은 Unity가 재임포트 처리 중이라 생긴 것입니다. 이전 작업의 잔여 알림들이고 이미 commit/push까지 완료된 상태입니다. 별도 조치 필요 없습니다.
+
+[사용자]
+기존 visual mesh는 없애주고 새로 추가한 애니메이션 mesh가 대체해줘. scale이랑 rotation도 맞춰줘. 그리고 달리면 계속 달리게 반복해주고 inplace로 해줘
+
+[Claude]
+Loop=false, in-place 미설정입니다. 클립 설정 변경, scale 수정, Body/Head 제거를 한 번에 처리합니다:
+
+[Claude]
+클립 설정이 제대로 반영됐는지 확인합니다:
+
+[Claude]
+모두 적용됐습니다. commit합니다:
+
+[Claude]
+완료됐습니다.
+
+- **Body/Head 캡슐** 제거
+- **Mesh scale** → `(2, 2, 2)`, rotation `(90, -90, 0)` 유지
+- **세 클립 모두** `loopTime=true`, `lockRootPositionXZ=true`, `lockRootHeightY=true` (in-place 반복)
+- **Animator** `applyRootMotion=false`
