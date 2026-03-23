@@ -2,710 +2,1256 @@
 ============================================================
 
 [사용자]
-자동 판매 업그레이드랑 자동 채굴 업그레이드 먹으면 주인공이랑 똑같이 생긴 캐릭터가 생성되서 해당 업무를 할 수 있도록 해줘. 그리고 현재 씬에 구현된 기능이랑 처음에 내가 보낸 기획서 및 영상에서 어느 기능까지 구현됐는 지 정리해서 보내주고 앞으로 해야할 일에 대해서 설명해줘
+이제 디자인을 적용할려고 해. 아래는 해당 fbx 치를 줄테니 이를 참고해서 차례대로 적용해줘. 이때 fbx의 경우 그 안의 폴더에 있는 texture를써줘. 그리고 기존의 object가 차지하던 크기 그대로 되도록 새로 생성해주고. 새로운 object를 배치함으로써 기존의 것들은 다 지워줘. 
+
+
+
+ ./modeling/object/
+
+- convey : 돌 -> 수갑 변경 기계
+
+- desk : 수갑을 올려놓는 책상
+
+- fence : 채석장을 감싸는 울타리
+
+- gate : 수감자들 spawner
+
+- handcuff : 수갑
+
+- jail1 : 수감자들 들어가는 20인 감옥
+
+- miner : 자동 채굴 시 생성되는 3명의 npc
+
+- money : 돈 
+
+- plate : 생산된 수갑이 쌓이는 곳
+
+- playcharacter : 플레이 캐릭터
+
+- prisoner_before : 생성되고 수갑을 받기 전 수감자
+
+- prisoner_after : 수갑을 받은 후 수감자
+
+- rock : 바위
+
+
+
+그리고 생성하면서 필요 시 collison 범위랑 모양을 수정해줘.
 
 [Claude]
-먼저 현재 코드 상태와 기획서를 확인할게요.
+현재 씬 상태를 먼저 확인하겠습니다.
 
 [Claude]
-現在のシーン構造を把握しました。NPCプレファブを作成して各UpgradeZoneに割り当てるEditorスクリプトを作ります。
+각 오브젝트의 위치와 크기를 확인하겠습니다.
 
 [Claude]
-프리팹이 생성됐습니다. UpgradeZone 연결을 확인해봅니다.
+오브젝트들의 바운드 크기를 확인하겠습니다.
 
 [Claude]
-비활성화된 오브젝트들에도 프리팹을 직접 할당합니다.
+현재 주요 오브젝트들의 구조를 자세히 확인하겠습니다.
 
 [Claude]
-프리팹 할당 완료. 이제 AutoSellNPC에 스폰 포인트(pickupPoint, deliveryPoint)와 참조가 설정되어야 합니다. 현재 씬에서 관련 오브젝트를 확인하고 연결합니다.
+Prison_20와 관련 오브젝트 상세 확인:
 
 [Claude]
-`AutoSellNPC`가 생성 시 자동으로 씬에서 참조를 찾도록 수정합니다.
+전체 구조를 파악했습니다. 이제 에디터 스크립트를 작성하고 FBX 파일을 임포트하겠습니다.
 
 [Claude]
-`AutoSellNPC.cs`를 Start()에서 자동으로 씬 참조를 찾도록 업데이트합니다.
+이제 Unity가 스크립트를 컴파일할 때까지 잠깐 기다린 후 Step 1부터 실행합니다.
 
 [Claude]
-마찬가지로 `WorkerNPC.cs`도 생성 시 miningGrid 자동 탐색하도록 확인합니다.
+에디터 스크립트는 런타임 컨텍스트에서는 접근 불가합니다. 메뉴로 실행해야 합니다. 먼저 컴파일이 완료됐는지 확인하겠습니다.
 
 [Claude]
-씬을 저장합니다.
+컴파일 완료. 이제 Step 1부터 순서대로 실행합니다.
 
 [Claude]
-이제 커밋하고 구현 현황 정리를 드리겠습니다.
+Step 1 성공. Step 2 실행:
 
 [Claude]
-Push 완료. 이제 전체 구현 현황을 정리해드립니다.
+Step 2 성공. Step 3 (씬 오브젝트 교체) 실행:
+
+[Claude]
+씬 오브젝트 상태를 확인합니다.
+
+[Claude]
+씬 오브젝트들에 Visual이 추가됐습니다. Step 4 (프리팹 업데이트) 실행:
+
+[Claude]
+프리팹도 모두 업데이트됐습니다. 이제 OuterWalls 울타리 교체 결과도 확인합니다.
+
+[Claude]
+스케일이 이상합니다. FBX 임포트 설정 확인이 필요합니다.
+
+[Claude]
+FBX가 cm 단위로 내보내져 있어서 스케일이 0.01입니다. 임포트 설정을 수정합니다.
+
+[Claude]
+이제 Step 3을 다시 실행해서 Visual 스케일을 재계산합니다.
+
+[Claude]
+프리팹도 재업데이트합니다.
+
+[Claude]
+PrisonerAI에서 prisoner_after 모델을 어떻게 사용하는지 확인합니다.
+
+[Claude]
+PrisonerAI에 수갑 완납 시 모델 교체 기능을 추가합니다.
+
+[Claude]
+이제 prisoner_after를 위한 별도 프리팹을 생성합니다.
+
+[Claude]
+이제 PrisonerPrefab에 afterVisualPrefab 레퍼런스를 연결합니다.
+
+[Claude]
+이제 씬 전체가 올바르게 설정됐는지 최종 확인합니다.
+
+[Claude]
+모든 오브젝트가 정상 적용됐습니다. 이제 git에 커밋하겠습니다.
+
+[Claude]
+완료됐습니다. 적용 결과를 정리합니다:
 
 ---
 
-## 구현 완료 내용 (NPC 프리팹 관련)
+## 적용 완료 내역
 
-**자동 채굴 업그레이드 (WorkerHire)** → `WorkerNPCPrefab` 생성 및 연결
-- 플레이어와 동일한 파란색 Body+Head 캡슐/구 외형
-- `UpgWorker` 업그레이드 존에 프리팹 할당 완료
-- 업그레이드 구매 시 row별 3명 자동 생성
-
-**자동 판매 업그레이드 (AutoSell)** → `AutoSellNPCPrefab` 생성 및 연결
-- 동일한 외형, `UpgAutoSell` 업그레이드 존에 할당 완료
-- Start()에서 ConverterMachine·DeskManager·픽업존·배달점 자동 탐색 (인스펙터 연결 불필요)
-
----
-
-## 기획서 vs 현재 구현 현황
-
-### ✅ 구현 완료
-
-| 기획 내용 | 구현 상태 |
-|---|---|
-| 플레이어 조이스틱 이동 + 애니메이션 | ✅ |
-| 채굴 구역 7×20 배치, 돌 부수면 6초 후 리스폰 | ✅ |
-| 채굴 시 등에 돌 쌓기, 10개 MAX 표시 (가득 찬 후도 채굴/소멸 계속) | ✅ |
-| 돌→수갑 변환기 (OreDropZone → ConverterMachine → HandcuffPickupZone) | ✅ |
-| 수갑 픽업, Desk로 가져가면 수갑 판매 | ✅ |
-| 수감자 줄서기 (최대 2명 시스템, Desk 앞 대기 → 뒷줄 대기) | ✅ |
-| 수감자당 수갑 4개 소비, 1개당 $10 돈 생성 | ✅ |
-| 수갑 개수 말풍선 UI | ✅ |
-| 감옥 수용 (20명), No Cell! 말풍선 | ✅ |
-| 드릴 업그레이드 ($20): 3칸 채굴, 딜레이 없음, 최대 스택 20 | ✅ |
-| 드릴 차 업그레이드 ($50): 5칸 채굴, 최대 스택 30 | ✅ |
-| 인력 고용 업그레이드 ($40): WorkerNPC 3명 자동 채굴 | ✅ |
-| 자동 판매 업그레이드 ($50): AutoSellNPC 왕복 판매 | ✅ |
-| 감옥 확장 업그레이드 ($50): 20명 → 100명 | ✅ |
-| 카메라 줌, 빌보드 라벨 | ✅ |
-| 돈 HUD (우상단) | ✅ |
-| 외벽 경계 | ✅ |
-
----
-
-### ❌ 미구현 / 추가 작업 필요
-
-| 기획 내용 | 상태 |
-|---|---|
-| **NPC 애니메이션** – WorkerNPC/AutoSellNPC가 이동할 때 걷기 애니메이션 없음 (캡슐이 미끄러지듯 이동) | ❌ |
-| **채굴 장비 시각화** – 드릴/드릴차 업그레이드 시 플레이어 모델 변경 (ToolModel_Pickaxe만 있고 Drill/DrillCar 메시 없음) | ❌ |
-| **드릴 차 탑승 모습** – 업그레이드 후 캐릭터가 차량에 탑승한 외형으로 변경 | ❌ |
-| **돈 줍기 자동화** – 현재 MoneyPickupZone에 직접 들어가야 돈이 HUD에 반영됨. 원래 기획은 자동 흡수 방식 | ❌ (현재는 DropZone 트리거 방식) |
-| **수감자 모습 변경** – 수갑 4개 받은 후 감옥으로 이동 시 외형 변화 없음 | ❌ |
-| **감옥 확장 시 침대/프랍 활성화 연출** – 확장 업그레이드 시 비활성화 침대 활성화 + 파티클 | ❌ |
-| **업그레이드 존 선행 조건 잠금 UI** – 현재 비활성화로 보이지 않음. 잠긴 상태 표시 없음 | ❌ |
-| **WorkerNPC 인력 고용 전용 행 할당** – 현재 row 0, 3, 6 하드코딩. 기획서는 "1줄씩 맡아 20칸 왕복" | 부분 구현 |
-| **모바일 최적화 / 오브젝트 풀링** | ❌ |
-
----
-
-## 앞으로 해야 할 작업 (우선순위 순)
-
-1. **채굴 장비 메시 추가** — 드릴(Drill), 드릴 차(DrillCar) 3D 모델을 Player의 ToolModel 슬롯에 추가하고 레벨에 따라 전환
-2. **NPC 걷기 애니메이션** — WorkerNPC/AutoSellNPC에 Animator + 간단한 걷기 클립 연결 (또는 절차적 보행 표현)
-3. **돈 자동 흡수** — MoneyPickupZone 근처에 있으면 자동으로 돈이 HUD에 더해지도록 변경
-4. **수감자 시각 피드백** — 수갑 4개 획득 후 모습 변화 (색상 전환 등)
-5. **감옥 확장 연출** — 침대 프랍 활성화 + 파티클 이펙트
-6. **업그레이드 잠금 UI** — 선행 조건 미충족 시 "잠금" 표시, 조건 달성 시 팝업 등장
-
-[사용자]
-수정해야할 점.
-
-
-
-1. 수감자 이동 방향 : 수감자가 L자 도로에 맞춰서 이동해야해. 그래서 wait -> desk -> prison 순이 아닌 중간에 경유점을 하나 더 추가해서 wait -> desk -> prisonwait -> prison 순이 되야해. 이때 prison이 가득 차면 prisonwait앞에서 대기하는 건 유지.
-
-2. 자동 판매 속도 변경 : 자동 판매 업그레이드 시 수갑을 들고 내려놓는 속도를 플레이어랑 똑같이 구현해줘.
-
-3. 돈, 수갑, 돈 스택 위치 변경 : 여러 종류의 물건을 플레이어가 들고 있을 시 위치 차별화
-
-4. 자동 채굴 업그레이드 방향 변경 : 자동 채굴 업그레이드 시  : 7행 20열에서 아래 3행을 맡았으면 해. 이 상태에서 20칸을 하나씩 이동하면서 돌이 있으면 채굴 없으면 이동했으면 좋겠어. 따로따로 작동해야할 거 같아. 그리고 이들이 채굴 시 수갑 변환 장치의 돌 부분에 쌓이게 해줘.
-
-[Claude]
-관련 코드들을 먼저 읽어볼게요.
-
-[Claude]
-전체 구조 파악 완료. 4가지 수정을 한 번에 진행합니다.
-
-[Claude]
-**CellManager** — 감옥 입구 공개 프로퍼티 추가:
-
-[Claude]
-**PrisonerAI** — desk → 감옥 입구 → cell/대기 L자 경로:
-
-[Claude]
-**AutoSellNPC** — 플레이어 드롭 간격과 동일한 속도로 수갑 전달:
-
-[Claude]
-**PlayerStackManager** — 아이템 타입별 스택 위치 분리:
-
-[Claude]
-**MiningGrid** — 특정 col+row 월드 좌표 공개 메서드 추가:
-
-[Claude]
-**DropZone** — 워커 광석 시각적 스택 + 자동 변환 메서드 추가:
-
-[Claude]
-**WorkerNPC** — 열(column) 기반 순회로 전환, OreDropZone에 광석 전달:
-
-[Claude]
-**UpgradeZone** — SpawnWorkers 열(col) 4, 5, 6 할당:
-
-[Claude]
-컴파일 오류 확인:
-
-[Claude]
-오류 없음. `DropZone.WorkerDeliverOre`에서 ore를 `Destroy` 후에도 `items` 리스트에 남아있는 문제를 체크합니다.
-
-[Claude]
-`WorkerDeliverOre`에서 ore를 destroy할 때 리스트에서도 제거하도록 수정합니다:
-
-[Claude]
-4가지 수정 완료입니다. 변경 내용 요약:
-
----
-
-### 1. 수감자 L자 경로
-- `PrisonerState.WalkingToPrisonWait` 상태 추가
-- `PrisonerAI.TryGoToCell()` 분리 → desk 처리 후 `CellManager.PrisonEntrance`(outsideQueueStart) 위치까지 먼저 이동, 도착 후 빈 셀이 있으면 입장, 가득 차면 그 앞에서 줄 서기
-
-### 2. 자동 판매 속도
-- `AutoSellNPC` 수갑 전달 루프에 `GameSettings.dropInterval`(0.3초) 간격 추가 → 플레이어가 드롭하는 것과 동일한 속도로 한 개씩 전달
-
-### 3. 아이템 스택 위치
-- `PlayerStackManager.GetLocalStackPosition()` 수정
-  - 돌(Ore): X = -0.28 (왼쪽)
-  - 수갑(Handcuff): X = 0 (중앙)  
-  - 돈(Cash): X = +0.28 (오른쪽)
-  - 각 타입 내에서 높이 방향으로 쌓임
-
-### 4. 자동 채굴 방향
-- `WorkerNPC` 완전 재작성: `assignedRow`(Z행 고정, X방향 이동) → `assignedCol`(X열 고정, Z방향 20칸 왕복)
-- `UpgradeZone.SpawnWorkers()`: row 0,3,6 → col 4,5,6 (7열 중 아래 3열)
-- `MiningGrid.GetNodeWorldPos(col, row)` 추가
-- `DropZone.WorkerDeliverOre()` 추가: OreDropZone에 광석 시각적 스태킹 + 변환기 자동 전달, 변환 완료 후 정리
-
-[사용자]
-수정해야할 점.
-
-
-
-1. 돈 spawn : 돈이 spawner에서 바로 나오는게 아니라. 수감자한테서 날라와서 spawner에 쌓이는 구조로 해줘. 
-
-2. prisonwait 위치 변경 : outsidequeuestart내의 makervis의 위치를 옮겼어 해당 위치로 prisonwait위치로 지정해줘. 그리고 모든 markervis에 맞춰서 수감자의 이동 경로가 수정되도록 구현해줘.
-
-3. 감옥 내 수감자들 쌓이는 모습 : 수감자의 실제 모양과 수감자들이 쌓이는 위치가 맞지 않아. 수정해줘
-
-[Claude]
-씬 상태와 관련 오브젝트를 먼저 확인할게요.
-
-[Claude]
-구조 파악 완료. 이제 3가지를 순서대로 수정합니다.
-
-**Change 1: 돈이 수감자에서 날아와서 쌓이는 애니메이션**
-
-[Claude]
-**Change 2: 모든 MarkerVis 위치 사용 — PrisonerSpawner, CellManager, PrisonerAI**
-
-[Claude]
-**PrisonerAI** — `InitializeWithPositions`으로 수정, MarkerVis 기반 경로 수용:
-
-[Claude]
-**CellManager** — MarkerVis 기반 PrisonEntrance + cellRoot 위치 반영, 수감자 Y 높이 수정:
-
-[Claude]
-`PrisonEntrance`가 `Transform`에서 `Vector3`으로 바뀌었으니 PrisonerAI에서 기존 `PrisonEntrance` 참조를 `PrisonEntrancePos`로 통일했는지 확인합니다. 컴파일 체크:
-
-[Claude]
-오류 없음. 이제 수감자 Y 위치도 이동 중에 유지되는지 확인합니다. `PrisonerAI.WalkTo`는 목적지 y좌표를 그대로 사용하므로, 셀 슬롯 y=0.85를 그대로 받아 정상 동작합니다. 씬 저장 후 커밋합니다.
-
-[Claude]
-완료입니다. 변경 내용 요약:
-
----
-
-### 1. 돈 Spawn 애니메이션
-- 수감자 머리 위에서 돈 오브젝트 생성
-- `moneyFlySpeed`(8 단위/초) + `moneyArcHeight`(1.5) 포물선으로 MoneyPickupZone까지 날아감
-- 도착 후 `PushItem()`으로 스택에 편입 (Inspector에서 속도/높이 조절 가능)
-
-### 2. MarkerVis 기반 경로
-- `GetMarkerPos(Transform t)` 패턴: 마커에 `MarkerVis` 자식이 있으면 그 위치 사용, 없으면 부모 위치 fallback
-- **PrisonerSpawner**: spawn/wait/desk 모두 MarkerVis 반영
-- **CellManager**: `PrisonEntrancePos` = OutsideQueueStart의 MarkerVis (-9.96, 0, -7), `CellGridOrigin` = CellRoot의 MarkerVis (3, 0, -7.21)
-- 앞으로 씬에서 MarkerVis만 이동하면 경로가 자동으로 따라감
-
-### 3. 감옥 내 수감자 위치
-- 셀 슬롯 y = **0.85** (캡슐 반높이) → 수감자가 바닥에 정확히 서도록
-- 그리드 원점을 `CellRoot.MarkerVis (3, 0, -7.21)`로 변경 → 실제 감옥 영역과 정렬
-- 슬롯 방향을 `+Z` 방향으로 통일 (이전 `-row*1.5` → `+row*1.5`)
-
-[사용자]
-이제 디자인 쪽으로 갈려고 해. 필요한 모델링 명들을 말해주면 내가 생성해서 넣어놓을게 그걸 적용해줘
-
-[Claude]
-현재 씬에서 어떤 오브젝트들이 프리미티브로 구성돼 있는지 전부 파악할게요.
-
-[Claude]
-전체 씬을 파악했습니다. 현재 프리미티브(Capsule/Cube/Sphere)로만 구성된 것들을 카테고리별로 정리해드립니다.
-
----
-
-## 필요한 모델 목록
-
-### 캐릭터 (3종)
-
-| 파일명 | 설명 | 참고 크기 (Unity units) |
+### 씬 오브젝트 (기존 크기 유지, Visual 자식으로 FBX 추가)
+| 씬 오브젝트 | FBX 모델 | 크기 |
 |---|---|---|
-| `char_police.fbx` | 플레이어 / 자동채굴 NPC / 자동판매 NPC 공용 (색상만 다르게) | 높이 ~1.7, 너비 ~0.7 |
-| `char_prisoner.fbx` | 수감자 (주황 계열) | 높이 ~1.7, 너비 ~0.7 |
+| `ConverterMachine` | convey | 2.65 × 2.4 × 2.0 |
+| `PoliceDeskArea` | desk | 1.5 × 1.8 × 2.5 |
+| `PrisonerSpawner` | gate | 2.0 × 2.0 × 2.0 |
+| `Prison_20` | jail1 | 8.1 × 3.1 × 10.2 |
+| `Player` | playcharacter | 1.05 × 2.5 × 1.02 |
+| `OreDropZone` | plate | 플레이트 비주얼 |
+| `HandcuffPickupZone` | plate | 수갑 쌓이는 트레이 |
+| `MoneyPickupZone` | money | 돈 비주얼 |
+| `OuterWalls` (18개 세그먼트) | fence | 각 벽 크기 맞춤 |
+| `MiningGridGroup` (35개 포스트/레일) | fence | 각 구간 크기 맞춤 |
 
-> 두 캐릭터 모두 **Pivot을 발 아래(0,0,0)** 에 두어야 바닥에 정확히 서게 됩니다.
+### 프리팹 업데이트
+- `RockPrefab` → rock FBX
+- `HandcuffPrefab` → handcuff FBX
+- `CashPrefab` → money FBX
+- `WorkerNPCPrefab`, `AutoSellNPCPrefab` → miner FBX
+- `PrisonerPrefab` → prisoner_before FBX + prisoner_after 완납 시 자동 교체
 
----
+### prisoner_before/after 연동
+- `PrisonerAI.SwapToAfterVisual()` 추가 — 수갑 완납 시 prisoner_after 모델로 자동 교체
+- `PrisonerAfterVisualPrefab` 생성 후 PrisonerPrefab에 자동 연결
 
-### 도구 (3종, 플레이어 손/등에 붙음)
-
-| 파일명 | 설명 | 참고 크기 |
-|---|---|---|
-| `tool_pickaxe.fbx` | 곡괭이 (기본 장비) | 길이 ~0.8 |
-| `tool_drill.fbx` | 드릴 (1차 업그레이드) | 길이 ~0.9 |
-| `tool_drillcar.fbx` | 드릴 차량 (2차 업그레이드, 탑승형) | 길이 ~2.0, 너비 ~1.2 |
-
----
-
-### 인벤토리 아이템 (4종, 등에 쌓임)
-
-| 파일명 | 설명 | 참고 크기 |
-|---|---|---|
-| `item_ore.fbx` | 광석 덩어리 (등에 쌓이는 작은 돌) | ~0.18 × 0.18 × 0.18 |
-| `item_rock.fbx` | 채굴 노드 (그리드에 깔린 큰 돌) | ~0.85 × 0.55 × 0.85 |
-| `item_handcuff.fbx` | 수갑 | ~0.24 × 0.08 × 0.12 |
-| `item_cash.fbx` | 돈다발 | ~0.20 × 0.04 × 0.12 |
-
----
-
-### 구조물 (5종)
-
-| 파일명 | 설명 | 참고 크기 |
-|---|---|---|
-| `struct_converter.fbx` | 변환기계 (돌→수갑, 컨베이어 벨트 형태) | ~2.0 × 2.0 × 3.0 |
-| `struct_desk.fbx` | 경찰 책상 | ~1.8 × 0.9 × 0.8 |
-| `struct_prison.fbx` | 감옥 건물 (철창 포함, 한 유닛) | ~10 × 3 × 10 |
-| `struct_upgrade_pad.fbx` | 업그레이드 발판 (5종 공용) | ~2.0 × 0.2 × 2.0 |
-| `struct_spawner.fbx` | 수감자 스포너 표시 구조물 | ~1.0 × 1.5 × 1.0 |
-
----
-
-### 주의사항
-
-- 모든 FBX는 **Y-up, Z-forward** (Unity 기본 방향)
-- **Pivot 위치**: 캐릭터는 발 아래, 나머지는 오브젝트 중심 또는 바닥 중심
-- 텍스처는 별도 이미지 파일 (PNG)로 제공하거나 **SubMesh 분리**로 주면 머티리얼 자동 분리 가능
-- `struct_prison.fbx`는 철창 부분을 별도 SubMesh로 분리해주면 반투명 처리 적용 용이
-
----
-
-모델 파일들을 `Assets/Models/` 폴더에 넣어주시면 바로 씬에 적용해드리겠습니다. 한꺼번에 줘도 되고, 카테고리별로 나눠서 줘도 됩니다.
+### 재사용 가능 에디터 툴
+`Tools > Apply FBX Designs` 메뉴 — 모델 추가/변경 시 단계별로 재실행 가능
 
 [사용자]
-돌 놓는 부분, 수갑 놓는 부분 모양을 바꿀거야. 기존의 것은 지워주고 바닥에 네모 점선 표시로 해줘
+새로 바뀐 object들의 size가 안맞아
 
 [Claude]
-현재 존 구조를 먼저 확인할게요.
+현재 실제 bounds를 확인하겠습니다.
 
 [Claude]
-구조 파악 완료. 에디터 스크립트로 기존 시각 요소를 제거하고 점선 테두리를 생성합니다.
+캐릭터 FBX 임포트 스케일을 확인합니다.
 
 [Claude]
-메뉴 실행이 반영이 안 됐네요. exec로 직접 실행합니다.
+각 FBX의 자연 크기를 측정합니다.
 
 [Claude]
-Tile·Corner 제거, 점선 생성 확인. 씬 저장 후 커밋합니다.
+문제를 파악했습니다. 두 가지 이슈가 있습니다:
+1. `localRotation = Quaternion.identity` 설정으로 FBX의 고유 회전(Z-up→Y-up 보정)이 제거돼서 일부 오브젝트가 뒤집힘
+2. 캐릭터들이 min 스케일 기준으로 계산돼서 너무 작음
+
+FBX별 자연 크기로 올바른 스케일을 계산합니다.
 
 [Claude]
-완료입니다.
+핵심 문제 두 가지를 파악했습니다:
+1. `localRotation = Quaternion.identity`로 FBX의 Z-up→Y-up 보정 회전이 제거되어 plate, money 등이 뒤집힘
+2. 캐릭터 스케일링이 min 기준이라 Player가 너무 작음 (0.91m vs 목표 2.0m)
 
-**변경 내용:**
-- **OreDropZone**: 황금색 점선 사각형 (3.5 × 3.0), 기존 Tile + 4개 Corner 제거
-- **HandcuffPickupZone**: 청색 점선 사각형 (4.0 × 2.5), 기존 Tile + 4개 Corner 제거
-- 점선 1개: 길이 0.30 / 간격 0.18 / 두께 0.06 / 높이 0.018 (바닥 위 아주 살짝)
-- 콜라이더는 그대로 유지 (기능 변화 없음)
+FBX 자연 크기(temp 측정값 기준):
+- playcharacter: Y=1.0m → 2.0m 목표 → scale 2.0
+- plate: (1.897, 0.230, 1.553) → target (2, 0.3, 2) → mild non-uniform ✓
+- money: Y=0.984m → 올바른 방향으로 서 있음
 
-나중에 점선 색상·크기·간격 조절이 필요하면 `DashedZoneBuilder.cs` 상단 상수값(`DASH_LEN`, `GAP_LEN` 등)만 수정하고 **Game → Rebuild Dashed Zones** 메뉴를 다시 실행하면 됩니다.
-
-[사용자]
-돌 놓는 곳과 책상 앞을 점선으로 만들어줘 둘 다 점선 안에 들어가야 돌이 놓아지고 책상 앞 점선 안에 들어가야 책상 위로 수갑을 놓을 수 있게해줘. 기존에는 둘 다 흰색 점선이다가 들어가서 동작하기 시작하면 녹색 형광색으로 바꿔줘. 나오면 다시 흰색이 되고
+스크립트를 수정합니다.
 
 [Claude]
-현재 DeskZone과 OreDropZone 동작 방식을 확인할게요.
+이제 Player와 캐릭터 교체 함수들을 `ScaleByHeight`를 사용하도록 수정합니다.
 
 [Claude]
-전체 구조 파악 완료. `ZoneDashedOutline.cs` 컴포넌트를 만들어 런타임에 점선 생성 + 색상 전환을 처리합니다.
+character prefab 업데이트 함수도 ScaleByHeight로 수정합니다.
 
 [Claude]
-컴파일 OK. 이제 OreDropZone과 DeskZone에 컴포넌트를 추가합니다.
+PrisonerPrefab 함수도 ScaleByHeight로 수정합니다.
 
 [Claude]
-컴포넌트 연결 확인. 씬 저장 후 커밋합니다.
+이제 울타리(fence) 스케일링도 수정합니다. 벽 길이/높이만 맞추고 두께(Z)는 자연 크기로 유지합니다.
 
 [Claude]
-완료입니다.
-
-**동작 방식:**
-- **OreDropZone** (황금색→형광녹색): 플레이어가 들어가면 초록으로 전환, 나오면 흰색으로 복귀. 돌 투입 가능 상태 표시
-- **DeskZone** (흰색→형광녹색): 플레이어가 들어가면 초록으로 전환, 수갑 놓기 가능 상태 표시
-
-**구조:**
-- `ZoneDashedOutline.cs` — BoxCollider 크기를 자동으로 읽어 점선 생성, `OnTriggerEnter/Exit`으로 색상 전환
-- `dashLen`, `gapLen`, `dashW` 등 Inspector에서 조절 가능
-- `idleColor` (흰색) / `activeColor` (형광녹색) Inspector에서 변경 가능
-
-[사용자]
-깃헙 푸쉬 해줘
+이제 `ScaleFenceSegment` 헬퍼를 `ScaleByHeight` 아래에 추가합니다.
 
 [Claude]
-푸쉬 완료입니다. 함께 커밋된 내용:
-
-- `SceneBuilder.cs` — 씬 실측 좌표 상수 업데이트
-- `RockNode.cs` — 콜라이더 isTrigger 보장
-- `MoneySpawner.cs` — 미사용 파일 삭제
-- `.meta` 파일들 — 신규 스크립트 메타 추가
-
-[사용자]
-이제 디자인을 적용할려고 해. 아래는 해당 fbx랑 png 위치를 같이 줄테니 이를 참고해서 차례대로 적용해줘. 이때 fbx의 경우 그 안의 폴더에 있는 texture를써줘
-
-
-
- ./modeling/image
-
-- bullupgrade.png : 불도져 업그레이드를 해당 텍스쳐로 변경.
-
-- drillupgrade.png : 드릴 업그레이드를 해당 텍스쳐로 변경.
-
-- jailupgrade.png : 드릴 업그레이드를 해당 텍스쳐로 변경.
-
-- sellupgrade.png : 자동 판매 업그레이드를 해당 텍스쳐로 변경.
-
-- miningupgrade.png : 자동 채굴 업그레이드를 해당 텍스쳐로 변경.
-
-이때, upgrade_example.png를 참고해서 모든 업그레이드 칸에 업그레이드까지 남은 돈을 ui로 출력해주도록 수정. 텍스트 위치는 해당 png 참고.
-
-이후 업그레이드 칸 네모 뒤에 업그레이드 진행 시 아래에서부터 초록색을 채워서 퍼센트 진행상황 표시 50퍼까지 돈 제출 완료 시. 절반 아래는 초록색 절 반 위는 원래 바닥색으로 구현
-
-- soundonbutton.png / soundoffbutoon.png : 화면 왼쪽 아래에 HUD로 버튼 추가 이 버튼 클릭 시 게임 내 모든 사운드 온/오프 가능. 모든 클릭 시 간단한 애니메이션 및 사운드 작동.
-
-- titleui.png : 왼쪽 위에 hud ui 띄워놓기. 조금씩 커졌다 작아졌다 하는 애니메이션 적용
-
-- moneyui.png : 오른쪽 위에 hud ui. 흰색 네모 칸 안에 현재 돈 량을 표시
+UpdateSimplePrefab도 FBX baked rotation 유지하도록 수정합니다.
 
 [Claude]
-먼저 파일 구조를 파악할게요.
+이제 컴파일 기다리고 Step 3, 4를 재실행합니다.
 
 [Claude]
-이미지 확인 완료. 기존 UI 구조도 파악합니다.
+스케일이 변경되지 않았습니다. 컴파일 오류 확인이 필요합니다.
 
 [Claude]
-좋습니다. 이제 단계별로 진행합니다.
-
-**Step 1: 이미지 에셋 복사**
+코드가 적용 안됐습니다. AssetDatabase 강제 새로고침 후 재실행합니다.
 
 [Claude]
-**Step 2: HUD 스크립트 작성 — SoundToggleButton, TitleUI**
+Player가 2.0m로 고쳐졌습니다. 나머지도 확인합니다.
 
 [Claude]
-**Step 3: Unity에서 에셋 임포트 → 텍스처 타입을 Sprite로 설정 → 업그레이드 존 재구성**
+문제가 복잡합니다. `preserveFBXRot`이 ScaleNonUniform과 충돌합니다. identity rotation 상태에서의 실제 natural bounds를 직접 측정하겠습니다.
 
 [Claude]
-9개 스프라이트 임포트 완료. 이제 업그레이드 존을 재구성합니다.
+baked rotation이 있을 때의 world bounds를 직접 측정하겠습니다.
 
 [Claude]
-5개 존 모두 이미지 적용 완료. 이제 CostText를 이미지 아래로 재배치하고 HUD를 구성합니다.
+이제 문제의 근본 원인을 파악했습니다. FBX가 270° X 회전(Z-up→Y-up)이 베이크되어 있어서 `ScaleNonUniform`이 world/local 축 혼용으로 잘못된 스케일을 냅니다. 전용 `ScaleNonUniformBaked` 함수로 수정합니다.
 
 [Claude]
-**Step 4: HUD Canvas 재구성 — 타이틀, 돈 UI, 사운드 버튼**
+이제 `AddFBXVisual`의 호출부를 `ScaleNonUniformBaked` / `ScaleUniformBaked`로 변경합니다.
 
 [Claude]
-씬 저장하고 커밋합니다.
+`UpdateSimplePrefab`도 `ScaleNonUniformBaked`로 수정합니다.
 
 [Claude]
-완료입니다. 적용된 내용 요약:
+이제 MoneyPickupZone은 ScaleByHeight를 사용하도록 수정합니다 (money FBX가 Z 방향이 너무 얇음).
 
----
-
-### 업그레이드 존 (5개)
-| 존 | 이미지 |
-|---|---|
-| UpgDrill | drillupgrade.png |
-| UpgDrillCar | bullupgrade.png |
-| UpgWorker | miningupgrade.png |
-| UpgAutoSell | sellupgrade.png |
-| UpgPrison | jailupgrade.png |
-
-- 각 존에 **빌보드 Quad** (1.8×1.8, 카메라를 항상 향함) 위에 이미지 표시
-- **FillBar** 초록색으로 변경, 플랫폼 뒤에서 아래→위로 채워짐 (결제 진행 시)
-- **CostText** 이미지 카드 아래에 재배치
-
-### HUD
-- **왼쪽 위** — `titleui.png` (Prison Life 타이틀), 호흡 애니메이션 (±6% 크기 진동)
-- **오른쪽 위** — `moneyui.png` 배경 + 흰 박스 안에 현재 돈 실시간 표시
-- **왼쪽 아래** — 사운드 버튼 (110×110px), 클릭 시 ON/OFF 이미지 전환 + 펀치 스케일 애니메이션 + `AudioListener.volume` 제어
-
-[사용자]
-각 업그레이드 존이 화면을 향하는게 아닌 바닥에서 위로 보게 해줄래 모두 적용해줘
+[Claude]
+스케일이 여전히 옛날 공식으로 계산됩니다. 파일 내용을 확인합니다.
 
 [사용자]
 This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
 
 Summary:
 1. Primary Request and Intent:
-   The user is developing a Unity mobile game (Prison Life / SupercentAssignment) — a top-down police/prison management game. Requests across the conversation:
-   - Implement auto-sell and auto-mine upgrades that spawn player-lookalike NPCs
-   - Fix prisoner movement to L-shaped path (wait→desk→prisonwait→prison)
-   - Match AutoSellNPC deposit speed to player's dropInterval
-   - Differentiate stack positions by item type (ore/handcuff/cash)
-   - Change WorkerNPC to traverse 20 rows along assigned column (bottom 3 cols: 4,5,6)
-   - Money should fly from prisoner to money zone with arc animation
-   - All prisoner waypoints use MarkerVis child positions
-   - Fix prisoner Y position in cells (capsule half-height 0.85)
-   - Replace OreDropZone/HandcuffPickupZone visuals with dashed floor outlines
-   - Add interactive dashed outlines to OreDropZone and DeskZone (white→green on enter)
-   - Apply PNG design assets to upgrade zones and HUD
-   - **Final request**: Change upgrade zone image quads from billboard (camera-facing) to floor-facing (flat on floor, facing upward)
+   The user requested applying 3D FBX models from `./modeling/object/` to the Unity scene, replacing existing placeholder objects. Specific requirements:
+   - Use textures from each FBX's own subfolder
+   - Match the exact size/bounds of the original objects being replaced
+   - Delete old objects after placing new FBX-based ones
+   - Modify collision shapes/ranges as needed
+   - Mapping: convey→ConverterMachine, desk→PoliceDeskArea, fence→OuterWalls+MiningGridGroup, gate→PrisonerSpawner, handcuff→HandcuffPrefab, jail1→Prison_20, miner→WorkerNPCPrefab/AutoSellNPCPrefab, money→CashPrefab+MoneyPickupZone, plate→OreDropZone+HandcuffPickupZone, playcharacter→Player, prisoner_before→PrisonerPrefab, prisoner_after→post-handcuff state, rock→RockPrefab
+   
+   Second request: "새로 바뀐 object들의 size가 안맞아" (newly changed objects' sizes don't match) — fix incorrect visual sizes.
 
 2. Key Technical Concepts:
-   - Unity URP (Universal Render Pipeline) - Unlit/Lit shaders
-   - CameraBillboard component (rotates to face camera each LateUpdate)
-   - World-space UI (TextMeshPro 3D, Quads)
-   - Screen-space Canvas UI (TextMeshProUGUI, Image, Button)
-   - SerializedObject/SerializedProperty for editor-time property assignment
-   - Unity Trigger system (OnTriggerEnter/Exit) for zone detection
-   - Coroutines for movement, animations, routines
-   - UpgradeZone fill bar (Y-scale grows from 0 to maxFillHeight)
-   - MarkerVis pattern: child GameObject used as actual waypoint position
-   - unity-cli exec for runtime/editor C# execution
-   - Git workflow: stage → commit → push
+   - Unity Editor scripting with `[MenuItem]`, `EditorApplication.ExecuteMenuItem`
+   - FBX import with ModelImporter (globalScale=100, fileScale=0.01 for cm-unit models)
+   - URP Lit materials with _BaseMap, _BumpMap, _MetallicGlossMap
+   - PrefabUtility.LoadPrefabContents / SaveAsPrefabAsset / UnloadPrefabContents
+   - Unity Renderer.bounds (world-space AABB)
+   - FBX baked 270°X rotation (Z-up → Y-up Blender export convention)
+   - world/local axis mapping with -90°X rotation: worldX=localX, worldY=localZ, worldZ=localY
+   - ScaleNonUniformBaked formula: localScale = (tW.x/b.x, tW.z/b.z, tW.y/b.y)
+   - ScaleByHeight for characters (Y-axis uniform scale)
+   - PrisonerAI state machine and visual swapping
+   - SerializedObject for setting private inspector fields
 
 3. Files and Code Sections:
-
-   - **Assets/Scripts/NPC/AutoSellNPC.cs**
-     - Auto-finds ConverterMachine, DeskManager, pickupPoint, deliveryPoint in Start()
-     - Delivers handcuffs one-by-one at dropInterval speed
+   - **`Assets/Editor/FBXDesignApplicator.cs`** (NEW — main editor tool)
+     - 4-step menu tool: `Tools/Apply FBX Designs`
+     - Step 1: Copies FBX+textures from `modeling/object/` → `Assets/Models/`
+     - Step 2: Creates URP Lit materials with diffuse/normal/metallic textures
+     - Step 3: Replaces scene objects with FBX visuals
+     - Step 4: Updates prefabs
+     - Key functions: `AddFBXVisual(parent, fbxPath, matName, targetBounds, localOffset, uniform, preserveFBXRot=true)`, `ScaleNonUniformBaked`, `ScaleUniformBaked`, `ScaleByHeight`, `ScaleFenceSegment`, `ScaleNonUniform`, `RemoveChildrenExcept`, `EnsureBoxCollider`
+     - Current state of `AddFBXVisual`:
      ```csharp
-     float dropInterval = GameManager.Instance.Settings.dropInterval;
-     foreach (GameObject hc in carrying) {
-         if (hc != null) { hc.SetActive(true); deskManager.ReceiveHandcuff(hc); }
-         yield return new WaitForSeconds(dropInterval);
-     }
-     ```
-
-   - **Assets/Scripts/NPC/WorkerNPC.cs**
-     - Rewritten: column-based traversal (assignedCol fixed, currentRow 0→19)
-     - Ore goes to OreDropZone via WorkerDeliverOre()
-     ```csharp
-     public void Initialize(MiningGrid grid, int col) {
-         assignedCol = col;
-         // finds OreDropZone by name
-         transform.position = miningGrid.GetNodeWorldPos(assignedCol, 0);
-         StartCoroutine(WorkRoutine());
-     }
-     ```
-
-   - **Assets/Scripts/NPC/PrisonerAI.cs**
-     - Replaced Transform-based Initialize with Vector3-based InitializeWithPositions
-     - L-shaped path: after desk → walk to PrisonEntrancePos → AssignCellOrQueue
-     ```csharp
-     public void InitializeWithPositions(Vector3 waitPos, Vector3 deskWorldPos,
-         DeskManager desk, CellManager cell, PrisonerSpawner spawner)
-     public void AdvanceToDesk(Vector3 targetDeskPos)
-     private void TryGoToCell() // walks to cellManager.PrisonEntrancePos first
-     ```
-
-   - **Assets/Scripts/NPC/PrisonerSpawner.cs**
-     - GetMarkerPos(Transform t): returns t.Find("MarkerVis")?.position ?? t.position
-     - Uses InitializeWithPositions() instead of Initialize()
-     - Queue positions calculated from MarkerVis of waitPosition
-
-   - **Assets/Scripts/NPC/CellManager.cs**
-     - PrisonEntrancePos: outsideQueueStart.Find("MarkerVis")?.position
-     - CellGridOrigin: cellRoot.Find("MarkerVis")?.position
-     - Cell slots at PRISONER_Y_OFFSET = 0.85f
-     - Grid direction changed to +Z (row * 1.5f instead of -row * 1.5f)
-
-   - **Assets/Scripts/Interactables/DeskManager.cs**
-     - Money spawns at prisoner head (prisoner.transform.position + Vector3.up * 1.5f)
-     - Arc animation flies to MoneyPickupZone
-     ```csharp
-     private IEnumerator FlyToZone(GameObject obj, Vector3 from) {
-         float t = 0f;
-         while (elapsed < duration) {
-             Vector3 flat = Vector3.Lerp(from, to, t);
-             flat.y += moneyArcHeight * Mathf.Sin(t * Mathf.PI);
-             obj.transform.position = flat;
+     static void AddFBXVisual(GameObject parent, string fbxPath, string matName,
+                              Vector3 targetBounds, Vector3 localOffset, bool uniform,
+                              bool preserveFBXRot = true)
+     {
+         var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
+         if (fbx == null) { Debug.LogWarning("[FBXDesigner] FBX not found: " + fbxPath); return; }
+         var existingVis = parent.transform.Find("Visual");
+         if (existingVis != null) Object.DestroyImmediate(existingVis.gameObject);
+         var vis = (GameObject)Object.Instantiate(fbx, parent.transform);
+         vis.name = "Visual";
+         vis.transform.localPosition = localOffset;
+         if (!preserveFBXRot)
+             vis.transform.localRotation = Quaternion.identity;
+         var mat = GetMat(matName);
+         if (mat != null)
+             foreach (var r in vis.GetComponentsInChildren<MeshRenderer>())
+                 r.sharedMaterial = mat;
+         if (preserveFBXRot)
+         {
+             if (uniform) ScaleUniformBaked(vis, targetBounds);
+             else ScaleNonUniformBaked(vis, targetBounds);
          }
-         moneyPickupZone.PushItem(obj);
+         else
+         {
+             if (uniform) ScaleNonUniform(vis, targetBounds);
+             else ScaleNonUniform(vis, targetBounds);
+         }
+     }
+     ```
+     - Current `ScaleNonUniformBaked`:
+     ```csharp
+     // FBX baked 270°X (Z-up) 회전용 비균등 스케일.
+     // Unity: world X = local X,  world Y = local Z,  world Z = local Y
+     // → b.size.x = naturalLocalX, b.size.y = naturalLocalZ, b.size.z = naturalLocalY
+     // localScale: (tW.x/b.x, tW.z/b.z, tW.y/b.y)
+     static void ScaleNonUniformBaked(GameObject go, Vector3 targetWorldSize)
+     {
+         go.transform.localScale = Vector3.one;
+         var renderers = go.GetComponentsInChildren<Renderer>();
+         if (renderers.Length == 0) return;
+         var b = renderers[0].bounds;
+         foreach (var r in renderers) b.Encapsulate(r.bounds);
+         if (b.size.x < 0.001f || b.size.y < 0.001f || b.size.z < 0.001f) return;
+         go.transform.localScale = new Vector3(
+             targetWorldSize.x / b.size.x,
+             targetWorldSize.z / b.size.z,   // worldZ target → local Y scale
+             targetWorldSize.y / b.size.y);  // worldY target → local Z scale
+     }
+     ```
+     - Current `ScaleByHeight`:
+     ```csharp
+     static void ScaleByHeight(GameObject go, float targetHeight)
+     {
+         go.transform.localScale = Vector3.one;
+         var renderers = go.GetComponentsInChildren<Renderer>();
+         if (renderers.Length == 0) return;
+         var b = renderers[0].bounds;
+         foreach (var r in renderers) b.Encapsulate(r.bounds);
+         if (b.size.y < 0.001f) return;
+         go.transform.localScale = Vector3.one * (targetHeight / b.size.y);
+     }
+     ```
+     - Current `ScaleFenceSegment`:
+     ```csharp
+     static void ScaleFenceSegment(GameObject go, Vector3 wallLocalSize)
+     {
+         go.transform.localScale = Vector3.one;
+         var renderers = go.GetComponentsInChildren<Renderer>();
+         if (renderers.Length == 0) return;
+         var b = renderers[0].bounds;
+         foreach (var r in renderers) b.Encapsulate(r.bounds);
+         if (b.size.x < 0.001f || b.size.y < 0.001f) return;
+         float wallLength = Mathf.Max(wallLocalSize.x, wallLocalSize.z);
+         float wallHeight = Mathf.Max(wallLocalSize.y, 1.0f);
+         // baked: world X = fence width, world Y = fence height
+         float sx = (wallLength > 0.1f) ? wallLength / b.size.x : 1.0f;
+         float sy_world = wallHeight / b.size.y;
+         // localScale Z → world Y (baked 270°X)
+         go.transform.localScale = new Vector3(sx, 1.0f, sy_world);
      }
      ```
 
-   - **Assets/Scripts/Interactables/DropZone.cs**
-     - Added WorkerDeliverOre(GameObject orePrefab): PushItem + ReceiveOre + timed Destroy
-     - RemoveAfterDelay coroutine cleans up from items list
+   - **`Assets/Scripts/NPC/PrisonerAI.cs`** (MODIFIED)
+     - Added `[SerializeField] private GameObject afterVisualPrefab;` field
+     - Added `SwapToAfterVisual()` method called from `ReceiveHandcuff()` when handcuffs complete
+     - SwapToAfterVisual hides "Visual" child and instantiates afterVisualPrefab as "Visual_After"
+     ```csharp
+     private void SwapToAfterVisual()
+     {
+         var before = transform.Find("Visual");
+         if (before != null) before.gameObject.SetActive(false);
+         if (afterVisualPrefab != null)
+         {
+             var after = Instantiate(afterVisualPrefab, transform);
+             after.name = "Visual_After";
+             after.transform.localPosition = Vector3.zero;
+             after.transform.localRotation = Quaternion.identity;
+             if (before != null) after.transform.localScale = before.localScale;
+         }
+     }
+     ```
 
-   - **Assets/Scripts/Interactables/UpgradeZone.cs**
-     - SpawnWorkers: changed from rows {0,3,6} to cols {4,5,6}
-     - Uses miningGrid.GetNodeWorldPos(cols[i], 0)
+   - **`Assets/Prefabs/PrisonerAfterVisualPrefab.prefab`** (NEW)
+     - Visual-only prefab for prisoner_after FBX with prisoner_after_mat material
+     - Linked to PrisonerPrefab.afterVisualPrefab via SerializedObject
 
-   - **Assets/Scripts/Interactables/MiningGrid.cs**
-     - Added: `public Vector3 GetNodeWorldPos(int col, int row) => GridToWorld(col, row);`
+   - **`Assets/Models/`** (NEW directory)
+     - Contains subdirectories: convey, desk, fence, gate, handcuff, jail1, miner, money, plate, playcharacter, prisoner_after, prisoner_before, rock
+     - Each with FBX + textures
+     - `Assets/Models/Materials/` - 13 .mat files
 
-   - **Assets/Scripts/Player/PlayerStackManager.cs**
-     - GetLocalStackPosition now differentiates by item type:
-       - Ore: baseX = -0.28f
-       - Handcuff: baseX = 0.00f
-       - Cash: baseX = +0.28f
+   - **`Assets/Prefabs/`** (MODIFIED)
+     - RockPrefab, HandcuffPrefab, CashPrefab, WorkerNPCPrefab, AutoSellNPCPrefab, PrisonerPrefab all updated with Visual children
+     - `Assets/Prefabs/PrisonerAfterVisualPrefab.prefab` (NEW)
 
-   - **Assets/Scripts/Interactables/ZoneDashedOutline.cs** (NEW)
-     - Builds dashed border at runtime from BoxCollider size
-     - OnTriggerEnter/Exit: white → fluorescent green color change
-     - Added to OreDropZone and DeskZone
-
-   - **Assets/Editor/DashedZoneBuilder.cs** (NEW)
-     - Menu: Game → Rebuild Dashed Zones
-     - Replaces Tile/Corner children with dashed cube segments
-     - OreDropZone: yellow-gold; HandcuffPickupZone: cyan-blue
-
-   - **Assets/Editor/NpcPrefabBuilder.cs** (NEW)
-     - Menu: Game → Build NPC Prefabs
-     - Creates WorkerNPCPrefab and AutoSellNPCPrefab (blue capsule + sphere head)
-
-   - **Assets/Scripts/UI/SoundToggleButton.cs** (NEW)
-     - Toggle AudioListener.volume, swap sprites, punch scale animation
-
-   - **Assets/Scripts/UI/TitleUI.cs** (NEW)
-     - Breathing scale: `float s = 1f + Mathf.Sin(Time.time * breatheSpeed * Mathf.PI) * breatheAmount;`
-
-   - **Assets/Textures/UI/** (NEW folder)
-     - drillupgrade.png, bullupgrade.png, miningupgrade.png, sellupgrade.png, jailupgrade.png
-     - soundonbutton.png, soundoffbutton.png, titleui.png, moneyui.png
-     - All imported as Sprite type with alphaIsTransparency
-
-   - **Scene: GameScene.unity**
-     - UpgradeZones: ArrowShaft/ArrowHead removed; UpgradeImage Quad added with CameraBillboard + PNG texture; FillBar made green
-     - HUD Canvas: TitleUI (top-left), MoneyUI (top-right with CashText TMP), SoundButton (bottom-left)
-     - OreDropZone, DeskZone: ZoneDashedOutline component added
-     - OreDropZone, HandcuffPickupZone: static DashedBorder children
-
-4. Errors and fixes:
-   - **System.Type.GetType("ZoneDashedOutline") returning null**: Fixed by searching all AppDomain assemblies in a foreach loop
-   - **"There is no RectTransform attached to SoundButton"**: Fixed by adding Image component first (which auto-creates RectTransform), then setting RectTransform properties
-   - **"execute_csharp failed: Exception has been thrown"** when building HUD in one exec call: Fixed by splitting into separate exec calls per HUD element (TitleUI, MoneyUI, SoundButton separately)
-   - **UpgradeZone exec failing with ZoneDashedOutline name**: Used reflection `AppDomain.CurrentDomain.GetAssemblies()` pattern consistently
+4. Errors and Fixes:
+   - **FBX scale too tiny (cm units)**: FBX models had fileScale=0.01 (cm), globalScale=1 → models appeared ~100x too small. Fixed by setting `globalScale=100` via ModelImporter for all standard models.
+   - **localRotation=Quaternion.identity breaks Z-up FBX**: Setting identity rotation removes the baked 270°X rotation correction, causing Y and Z world bounds to swap. Fixed by adding `preserveFBXRot` parameter — when true, don't override localRotation.
+   - **Player too small (0.91m)**: ScaleUniform using Mathf.Min chose scale=1.02 (Z was already at target). Fixed by adding `ScaleByHeight(vis, 2.0f)` which scales uniformly based on Y dimension → player now 2.0m tall.
+   - **ScaleNonUniform wrong for baked-rotation FBX**: With baked 270°X rotation, world Y = local Z, world Z = local Y. Old formula `(tX/bX, tY/bY, tZ/bZ)` applied target Y to localScale Y, but localScale Y controls world Z. Fixed with `ScaleNonUniformBaked`: `(tX/bX, tZ/bZ, tY/bY)` — targetZ controls scaleY (→worldZ), targetY controls scaleZ (→worldY).
+   - **Script not compiling after edit**: Used `AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate)` and waited for `EditorApplication.isCompiling` to return false before re-executing.
+   - **PrisonerAI private field reference**: Used SerializedObject to set `afterVisualPrefab` private serialized field in prefab editing scope.
 
 5. Problem Solving:
-   - MarkerVis pattern: Designer moves child object named "MarkerVis" in scene editor; code reads its position instead of parent. Implemented via static `GetMarkerPos(Transform t)` helper.
-   - WorkerNPC ore delivery: DropZone.WorkerDeliverOre() both visually stacks ore AND triggers ConverterMachine.ReceiveOre(), with timed cleanup via coroutine.
-   - Upgrade zone FillBar: maxFillHeight changed to 1.8f to match new 1.8×1.8 image card size.
+   - **FBX natural bounds measurement**: Discovered that FBX models instantiated with `localRotation=identity` give different world bounds than with baked rotation. Measured both via unity-cli exec to understand the Y/Z axis swap.
+   - **ScaleNonUniformBaked derivation**: Worked through the -90°X rotation math (world Y = local Z * scaleZ, world Z = local Y * scaleY) to derive correct formula: `localScale = (tW.x/b.x, tW.z/b.z, tW.y/b.y)` where b is measured with baked rotation active.
+   - **Fence scaling approach**: Changed from ScaleNonUniform (which caused Z-stretch of 8-10x on thin fence panels) to ScaleFenceSegment which scales X (length) and uses scaleZ for world Y (height), keeping natural local Y.
+   - **Money zone visual**: Used ScaleByHeight(0.5f) directly since money FBX is very thin in Z (0.145m natural) making ScaleNonUniformBaked produce extreme Z-stretch for 1.0m target.
+   - **ONGOING**: After implementing ScaleNonUniformBaked and re-running Step 3, ConverterMachine/PoliceDeskArea/PrisonerSpawner/Prison_20 still show wrong sizes matching OLD ScaleNonUniform formula. Investigation suggests possible compilation cache issue.
 
-6. All user messages:
-   - "자동 판매 업그레이드랑 자동 채굴 업그레이드 먹으면 주인공이랑 똑같이 생긴 캐릭터가 생성되서 해당 업무를 할 수 있도록 해줘. 그리고 현재 씬에 구현된 기능이랑 처음에 내가 보낸 기획서 및 영상에서 어느 기능까지 구현됐는 지 정리해서 보내주고 앞으로 해야할 일에 대해서 설명해줘"
-   - "수정해야할 점. 1. 수감자 이동 방향 [L자 경로] 2. 자동 판매 속도 변경 3. 돈, 수갑, 돈 스택 위치 변경 4. 자동 채굴 업그레이드 방향 변경"
-   - "수정해야할 점. 1. 돈 spawn [수감자에서 날아오기] 2. prisonwait 위치 변경 [MarkerVis 기반] 3. 감옥 내 수감자들 쌓이는 모습"
-   - "이제 디자인 쪽으로 갈려고 해. 필요한 모델링 명들을 말해주면 내가 생성해서 넣어놓을게 그걸 적용해줘"
-   - "돌 놓는 부분, 수갑 놓는 부분 모양을 바꿀거야. 기존의 것은 지워주고 바닥에 네모 점선 표시로 해줘"
-   - "돌 놓는 곳과 책상 앞을 점선으로 만들어줘 둘 다 점선 안에 들어가야 돌이 놓아지고 책상 앞 점선 안에 들어가야 책상 위로 수갑을 놓을 수 있게해줘. 기존에는 둘 다 흰색 점선이다가 들어가서 동작하기 시작하면 녹색 형광색으로 바꿔줘. 나오면 다시 흰색이 되고"
-   - "깃헙 푸쉬 해줘"
-   - "이제 디자인을 적용할려고 해. 아래는 해당 fbx랑 png 위치를 같이 줄테니 이를 참고해서 차례대로 적용해줘. [upgrade PNGs, sound button, title UI, money UI 상세 요구사항]"
-   - "각 업그레이드 존이 화면을 향하는게 아닌 바닥에서 위로 보게 해줄래 모두 적용해줘"
+6. All User Messages:
+   - "이제 디자인을 적용할려고 해. 아래는 해당 fbx 치를 줄테니 이를 참고해서 차례대로 적용해줘. 이때 fbx의 경우 그 안의 폴더에 있는 texture를써줘. 그리고 기존의 object가 차지하던 크기 그대로 되도록 새로 생성해주고. 새로운 object를 배치함으로써 기존의 것들은 다 지워줘. [list of FBX models] 그리고 생성하면서 필요 시 collison 범위랑 모양을 수정해줘."
+   - "새로 바뀐 object들의 size가 안맞아" (newly changed objects' sizes don't match)
 
 7. Pending Tasks:
-   - **Current**: Change upgrade zone UpgradeImage Quads from billboard (camera-facing) to floor-facing (flat on ground, facing upward/Y-up). This means removing CameraBillboard component and setting rotation to face up (localEulerAngles = (90, 0, 0) so the quad lies flat on the floor looking up).
+   - **Fix ScaleNonUniformBaked not being executed**: ConverterMachine, PoliceDeskArea, PrisonerSpawner, Prison_20 still show wrong world bounds. The code on disk is correct but results suggest old code is running. Need to ensure Unity compiles new code and re-run Step 3.
+   - Verify all standard model visuals (convey, desk, gate, jail1) show correct target world bounds after ScaleNonUniformBaked is properly executed.
+   - Run Step 4 (Update Prefabs) after Step 3 is confirmed working.
+   - Commit final working state.
 
 8. Current Work:
-   The most recent completed work was applying UI design assets to the upgrade zones and HUD canvas. Five upgrade zones received billboard Quads with PNG textures (drill/bull/mining/sell/jail upgrade images). The HUD canvas was rebuilt with TitleUI (top-left, breathing animation), MoneyUI (top-right, money icon + cash text), and SoundButton (bottom-left, on/off toggle).
+   Debugging why `ScaleNonUniformBaked` in `Assets/Editor/FBXDesignApplicator.cs` is not being executed for standard FBX scene objects (ConverterMachine, PoliceDeskArea, PrisonerSpawner, Prison_20). 
 
-   The user's final request before the summary was: "각 업그레이드 존이 화면을 향하는게 아닌 바닥에서 위로 보게 해줄래 모두 적용해줘"
+   The file content at line 629 shows the correct branching:
+   ```csharp
+   if (preserveFBXRot)
+   {
+       if (uniform) ScaleUniformBaked(vis, targetBounds);
+       else ScaleNonUniformBaked(vis, targetBounds);
+   }
+   ```
+   
+   But measured scene results show these objects still getting `ScaleNonUniform` output (e.g., PrisonerSpawner localScale=(1.565, 1.052, 3.588) = targetSize/baked_world_bounds component-wise, which is the old formula).
 
-   This means the UpgradeImage Quads on each UpgradeZone should NOT use CameraBillboard (which makes them face the camera), but instead lie flat on the ground facing upward (like a floor sticker/decal).
+   The correct ScaleNonUniformBaked formula for gate (baked bounds 1.278, 1.901, 0.557, target 2×2×2):
+   - localScale = (2/1.278, 2/0.557, 2/1.901) = (1.565, 3.591, 1.052)
+   - But scene shows (1.565, 1.052, 3.588) = old ScaleNonUniform result
+
+   After calling `AssetDatabase.Refresh(ForceUpdate)` and waiting for compile, re-running Step 3 gives same results, suggesting a persistent compilation or caching issue.
+
+   Confirmed working correctly after fixes:
+   - Player: (1.26, 2.00, 2.25) scale=(2.252, 2.252, 2.252) ✓
+   - OreDropZone: (2.00, 0.30, 2.03) scale=(1.054, 1.307, 1.288) ✓
+   - HandcuffPickupZone: (4.00, 0.37, 2.03) scale=(2.108, 1.307, 1.610) ✓
+   - MoneyPickupZone: (0.96, 0.50, 0.07) scale=(0.508, 0.508, 0.508) ✓
 
 9. Optional Next Step:
-   Execute the following change for all 5 UpgradeZones:
-   - Find each UpgradeZone's "UpgradeImage" child
-   - Remove the CameraBillboard component
-   - Set localRotation to Quaternion.Euler(90, 0, 0) so the Quad faces upward (lying flat on floor)
-   - Adjust localPosition Y to be just above the platform (e.g., y = -0.43f, just above Platform at y=-0.50)
-   - Keep the scale at (1.8, 1.8, 1.8)
+   The user complained "새로 바뀐 object들의 size가 안맞아" and the ongoing work is fixing sizes. The immediate next step is to diagnose and fix why ScaleNonUniformBaked isn't executing for ConverterMachine/PoliceDeskArea/PrisonerSpawner/Prison_20.
 
-   Direct quote from user: "각 업그레이드 존이 화면을 향하는게 아닌 바닥에서 위로 보게 해줄래 모두 적용해줘"
+   The approach should be: Force a fresh compile (touch the file or add a no-op change), verify via unity-cli exec that the new function runs, then re-execute Step 3. The ScaleNonUniformBaked formula for gate with baked bounds (1.278, 1.901, 0.557) and target (2,2,2) should produce localScale=(1.565, 3.591, 1.052) giving correct world bounds (2.0, 2.0, 2.0).
 
-If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: C:\Users\qudtn\.claude\projects\E--unityProject-SupercentAssignment\16fa5fa6-9d9c-41c7-8e51-413cb22a6736.jsonl
+   Direct quote of the incomplete work: The scene measurement after Step 3 shows `PrisonerSpawner size=(2.00, 6.82, 0.59) scale=(1.565, 1.052, 3.588)` when it should show `scale=(1.565, 3.591, 1.052)` with world bounds `(2.00, 2.00, 2.00)`.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: C:\Users\qudtn\.claude\projects\E--unityProject-SupercentAssignment\739d16ee-d878-4a02-aacd-891325b2567f.jsonl
 Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
 
 [Claude]
-Only one zone updated. Let me check the others.
+PrisonerSpawner is now correct: `worldSize=(2.00, 2.00, 2.00)`. Let me check the other objects.
 
 [Claude]
-Only one UpgradeZone is loaded. Let me check the scene for all upgrade-related GameObjects.
+ConverterMachine and Prison_20 are now correct. Let me investigate PoliceDeskArea more closely.
 
 [Claude]
-Only UpgDrill exists in the scene. Let me check the SceneBuilder to see how the other upgrade zones should be built.
+The issue is that `PoliceDeskArea` has `rotY=90°` which causes X and Z world bounds to swap. The current `ScaleNonUniformBaked` doesn't account for parent rotation. I'll implement a probe-based `ScaleToFitWorldBounds` that's rotation-agnostic.
 
 [Claude]
-UpgDrill's UpgradeImage is already updated — CameraBillboard removed, rotation set to (90, 0, 0) so it lies flat on the floor facing up, positioned at y=-0.43 just above the platform.
-
-Since only UpgDrill exists in the scene currently, also update the SceneBuilder so future zones are built correctly (floor-facing instead of billboard):
+Now update `AddFBXVisual` to use `ScaleToFitWorldBounds` instead of the baked rotation variants:
 
 [Claude]
-Now let me find the UpgradeImage quad creation code in SceneBuilder to update it:
+All 4 objects now match their targets exactly:
+- **ConverterMachine**: `(2.65, 2.40, 2.00)` ✓
+- **PoliceDeskArea**: `(1.50, 1.80, 2.50)` ✓ (was `(0.99, 1.80, 3.78)`)
+- **PrisonerSpawner**: `(2.00, 2.00, 2.00)` ✓
+- **Prison_20**: `(8.10, 3.08, 10.20)` ✓
+
+Now run Step 4 to update prefabs and save everything:
 
 [Claude]
-UpgDrill's UpgradeImage is already floor-facing. Now let me also update the SceneBuilder's `BuildUpgradeZone` so future rebuilds create floor-facing images. First, let me check if it has any UpgradeImage creation code, then add it:
+The only error is a pre-existing TMP font issue, unrelated to our changes. Let me do a final verification of all scene objects:
 
 [Claude]
-I need to check what texture path/name maps to each upgrade zone type. Let me check the existing textures and how the UpgDrill image was set:
+All visual sizes match their targets. Now let me commit:
 
 [Claude]
-Now I'll update SceneBuilder to include floor-facing UpgradeImage quad creation for future rebuilds:
+All FBX visual sizes are now correct. The fix replaced the flawed `ScaleNonUniformBaked` (which assumed no parent rotation) with a new `ScaleToFitWorldBounds` function that probes each local scale axis to determine its world-space effect — correctly handling `PoliceDeskArea`'s 90° Y rotation.
 
-[Claude]
-Now update the call sites in `BuildUpgradeZones` to pass texture names:
-
-[Claude]
-Now save the scene and verify compilation:
-
-[Claude]
-No errors. Now commit and push:
-
-[Claude]
-완료했습니다.
-
-- **UpgDrill의 UpgradeImage**: CameraBillboard 제거, `localRotation = (90, 0, 0)` 적용 → 바닥에 눕혀서 위로 보는 형태
-- **SceneBuilder** 업데이트: `BuildUpgradeZone`에 `textureName` 파라미터 추가, 씬 재빌드 시 5개 존 모두 floor-facing 이미지로 생성 (drillupgrade/bullupgrade/miningupgrade/sellupgrade/jailupgrade)
-- 커밋 및 푸시 완료
+Final world bounds:
+| Object | Size (W×H×D) |
+|---|---|
+| ConverterMachine | 2.65 × 2.40 × 2.00 ✓ |
+| PoliceDeskArea | 1.50 × 1.80 × 2.50 ✓ |
+| PrisonerSpawner | 2.00 × 2.00 × 2.00 ✓ |
+| Prison_20 | 8.10 × 3.08 × 10.20 ✓ |
+| OreDropZone | 2.00 × 0.30 × 2.00 ✓ |
+| HandcuffPickupZone | 4.00 × 0.30 × 2.50 ✓ |
+| Player | — × 2.00 × — ✓ |
 
 [사용자]
-이미지가 생겼으니 아래 원래 플랫폼들은 없애주고 fillbar는 그림보다 아래 바닥보다는 위로 가게 해서 그림이 보이도록 해주고, 텍스트도 내가 현재 씬에 드릴에 배치한 거 참고해서 전부 수정해줨
+fence가 비정상적으로 커
 
 [Claude]
-UpgDrill이 레퍼런스입니다 — Platform 없음, FillBar가 바닥에 납작하게, CostText가 90° 눕혀져 있습니다. 나머지 4개 존도 동일하게 적용하고, FillBar가 수직으로 자라는 대신 바닥 위에서 Z방향(앞→뒤)으로 차오르도록 UpgradeZone.cs도 수정하겠습니다.
+The issue is clear: the wall segments use `localScale` for their world dimensions (BoxCollider.size is always `(1,1,1)`), but `ScaleFenceSegment` reads `bc.size = (1,1,1)` as the target — causing massive over-scaling.
+
+The fix: use the wall's actual world size (`child.lossyScale`) as the target and use `ScaleToFitWorldBounds`.
 
 [Claude]
-이제 4개 비활성 존에서 Platform 제거하고 FillBar/CostText/UpgradeImage 위치 + 회전을 UpgDrill 레퍼런스에 맞게 수정합니다:
+The fence sizes are still wrong — this is because Step 3's fence loop checks for `MeshRenderer` to decide which children to process, but after the first run, those are destroyed. Subsequent runs skip all wall segments, leaving the old (broken) FenceVisual untouched. I need to make the fence loop idempotent.
 
 [Claude]
-이제 UpgDrill의 FillBar도 새 로직에 맞게 초기화값 맞추고, ArrowShaft/ArrowHead가 남아 있다면 제거합니다:
+All fence segments now exactly match their target world dimensions. Let me commit and push:
 
 [Claude]
-SceneBuilder도 Platform / ArrowShaft / ArrowHead 생성 코드를 제거하고 FillBar 초기 위치를 새 값으로 업데이트합니다:
+펜스 크기가 수정됐습니다. 두 가지 버그를 고쳤습니다:
+
+1. **잘못된 타겟 크기**: `bc.size=(1,1,1)`을 타겟으로 사용했는데, 실제 벽 세그먼트는 `localScale`로 월드 크기를 정의함 → `child.lossyScale`로 교체
+2. **Step 3 재실행 불가**: MeshRenderer 존재 여부로 처리 대상을 판단해서, 첫 실행 후 MeshRenderer가 삭제되면 다음 실행 시 모든 세그먼트를 건너뜀 → 기존 FenceVisual을 먼저 제거하는 방식으로 idempotent하게 수정
+
+결과: Wall_West `(0.60, 3.50, 34.00)`, Wall_South `(47.00, 3.50, 0.60)` 등 모든 펜스 세그먼트가 정확히 일치.
+
+[사용자]
+아냐 외벽은 그대로 이고 채석장을 감싸는 울타리를 fence로 해줘. 그리고 물체들이 지금 공중에 떠있거나 그런 상태야. 이런 z축이나 위치를 수정해줘
 
 [Claude]
-변경사항 검증하고 저장합니다:
+Now I understand both issues clearly:
+1. Outer walls need to be restored (original colored cubes) — call `SceneBuilder.BuildOuterWalls()` 
+2. All objects are floating because `localOffset.y = tb.y/2` — but FBX pivots are at the base, so offset should be `Vector3.zero`
 
 [Claude]
-완료했습니다.
+Now I'll make all the changes:
+1. Restore OuterWalls via `SceneBuilder.BuildOuterWalls()`, apply fence only to MiningGridGroup
+2. Fix all `localOffset.y = tb.y/2` → `Vector3.zero` (FBX pivots are at base)
 
-**변경 내용:**
+[Claude]
+Now fix `ReplaceFenceWalls` to restore OuterWalls and only apply fence to MiningGridGroup:
 
-| 항목 | 변경 |
-|------|------|
-| Platform | 5개 존 전부 제거 |
-| ArrowShaft / ArrowHead | 제거 |
-| FillBar | y=-0.441 (이미지 y=-0.43보다 아래), 두께 0.005, Z방향으로 차오름 (뒤→앞 슬라이드) |
-| CostText | (0.31, -0.43, -0.61), rot=(90,0,0) — UpgDrill 레퍼런스 그대로 |
-| UpgradeImage | 5개 존 모두 (0, -0.43, 0), rot=(90,0,0) 바닥 눕힘 |
+[Claude]
+Now fix Prison and MoneyZone / PlateZone / HandcuffZone offsets:
 
-FillBar는 이제 수직으로 솟지 않고 이미지 아래에서 Z방향으로 앞쪽을 향해 채워지는 방식으로 동작합니다.
+[Claude]
+Now compile and run:
+
+[Claude]
+All objects now sit on the ground (bottom=0.00). Now check that OuterWalls is restored and MiningGridGroup fence is correct:
+
+[Claude]
+Fence posts have their pivot at base so they're floating. Let me add vertical centering to match the original box's world center Y:
+
+[Claude]
+All correct. Fence posts match the original box span (-0.10 to 1.30), main objects grounded at 0.00. Commit and push:
+
+[Claude]
+수정 내용 요약:
+
+1. **외벽 복원**: `SceneBuilder.BuildOuterWalls()` 호출로 OuterWalls를 원래 컬러 큐브로 복원. 펜스 FBX는 채굴장(MiningGridGroup)의 FencePost/FenceRail에만 적용.
+
+2. **공중 부양 수정**: 모든 FBX 모델의 pivot이 base(바닥)에 있는데 `localOffset.y = tb.y/2`로 절반 높이만큼 들어올렸기 때문에 떠 있었음. 모든 곳을 `Vector3.zero`로 변경 → 모든 오브젝트 `bottom=0.00`.
+
+3. **채굴장 펜스 포스트 위치**: `ScaleToFitWorldBounds` 후 bounds 중심 Y를 부모 Y에 맞추는 처리 추가 → 원본 박스와 동일하게 `-0.10 ~ 1.30` 범위.
+
+[사용자]
+a00b266f5a54aab541c00b7633e0dabdc656e9bd로 커밋 돌려줘
+
+[Claude]
+`a00b266` 이후의 커밋 4개가 사라집니다. 진행할까요?
+
+(원격 브랜치에도 force push가 필요합니다)
+
+[사용자]
+진행해줘
+
+[Claude]
+완료. `a00b266` (Fix Korean font rendering with Malgun Gothic TMP font) 으로 되돌아갔습니다.
+
+[사용자]
+아래 fbx위치를 알려줄테니 모두 임포트해줘 이때 z축 맞춰주고 스케일도 게임에 맞게 해줘. 씬에 적용하지는 마. 적용은 이후 프롬프트를 통해 순차적으로 할거야. material은 각 폴더 안에 있을 거야.
+
+
+
+ ./modeling/object/
+
+- convey : 돌 -> 수갑 변경 기계
+
+- desk : 수갑을 올려놓는 책상
+
+- fence : 채석장을 감싸는 울타리
+
+- gate : 수감자들 spawner
+
+- handcuff : 수갑
+
+- jail1 : 수감자들 들어가는 20인 감옥
+
+- miner : 자동 채굴 시 생성되는 3명의 npc
+
+- money : 돈 
+
+- plate : 생산된 수갑이 쌓이는 곳
+
+- playcharacter : 플레이 캐릭터
+
+- prisoner_before : 생성되고 수갑을 받기 전 수감자
+
+- prisoner_after : 수갑을 받은 후 수감자
+
+- rock : 바위
+- police : 경찰 npc 캐릭터
+
+
+그리고 생성하면서 필요 시 collison 범위랑 모양을 수정해줘.
+
+[Claude]
+이제 임포트 스크립트를 작성합니다. base.fbx(Blender Z-up, cm단위)와 character FBX(tripo_convert, Y-up, m단위)를 구분해서 처리합니다.
+
+[Claude]
+임포트 완료. 이제 각 모델의 실제 크기를 측정해서 게임에 맞게 scale을 조정합니다.
+
+[Claude]
+모든 모델이 약 190m로 너무 큼. `fileScale=0.01`(cm 단위)에 `globalScale=100`을 곱해서 × 배가 됐음. `globalScale=1`로 수정합니다.
+
+[Claude]
+또한 이미 복사된 파일은 스킵하는 로직 때문에 scale만 업데이트하려면 `CopyToAssets` 대신 `ConfigureFBX`만 다시 호출하는 별도 메뉴를 추가합니다:
+
+[Claude]
+Props 크기는 적정합니다. 캐릭터는 높이 1.0m로 너무 작으니 `globalScale=1.8`로 조정합니다.
+
+[Claude]
+모든 캐릭터 높이 1.8m. 이제 머티리얼 확인 및 커밋합니다.
+
+[Claude]
+캐릭터 머티리얼에 텍스처가 없음. `.fbm` 폴더 경로 처리 문제입니다. 직접 텍스처를 할당합니다:
+
+[Claude]
+모든 텍스처 할당 완료. 이제 커밋합니다.
+
+[Claude]
+임포트 완료. 결과 요약:
+
+**Props (base.fbx, bakeAxisConversion=true, globalScale=1)**
+| 모델 | 크기 (W×H×D) |
+|---|---|
+| convey | 1.90 × 1.07 × 1.19m |
+| desk | 1.90 × 1.10 × 0.75m |
+| fence | 1.90 × 1.07 × 0.30m |
+| gate | 1.28 × 1.90 × 0.56m |
+| handcuff | 1.88 × 0.43 × 1.80m |
+| jail1 | 1.65 × 0.96 × 1.90m |
+| money | 1.90 × 0.98 × 0.14m |
+| plate | 1.90 × 0.23 × 1.55m |
+| rock | 1.72 × 1.47 × 1.90m |
+
+**캐릭터 (tripo_convert .fbx, globalScale=1.8 → 1.8m 신장)**
+| 모델 | 크기 |
+|---|---|
+| miner / playcharacter / police | ~1.8m 높이 |
+| prisoner_before / prisoner_after | ~1.8m 높이 |
+
+머티리얼 14개 (`Assets/Models/Materials/`) — URP Lit, diffuse/normal/metallic 텍스처 할당 완료. 씬에는 미배치.
+
+[사용자]
+감옥부터 바꿔볼까 입구 방향에 유의해서
+
+[사용자]
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   - **Revert to commit a00b266**: User requested hard reset + force push to `a00b266` (Fix Korean font rendering with Malgun Gothic TMP font), discarding 4 later commits.
+   - **Import all FBX models**: Import 14 FBX models from `./modeling/object/` into `Assets/Models/`, setting correct Z-axis, game-appropriate scale, and URP Lit materials with textures. Explicitly: do NOT place in scene yet.
+     - Models: convey, desk, fence, gate, handcuff, jail1, miner, money, plate, playcharacter, police, prisoner_before, prisoner_after, rock
+   - **Apply jail1 to Prison_20**: Begin scene replacement starting with the prison, paying attention to entrance direction.
+
+2. Key Technical Concepts:
+   - Unity `ModelImporter`: `globalScale`, `useFileScale`, `bakeAxisConversion`, `importAnimation`, `animationType`
+   - Blender Z-up → Unity Y-up axis correction via `bakeAxisConversion = true`
+   - FBX unit scale: Blender exports in cm (fileScale=0.01), so `globalScale=100` is WRONG (produces 190m objects); correct is `globalScale=1` — fileScale handles the cm→m conversion internally
+   - Tripo AI character models export at normalized 1.0m height → `globalScale=1.8` to reach game-appropriate 1.8m
+   - URP Lit shader: `_BaseMap` (diffuse), `_BumpMap` (normal), `_MetallicGlossMap` (metallic)
+   - Two FBX types:
+     - **base.fbx**: Blender props, Z-up, cm units → `globalScale=1`, `bakeAxisConversion=true`, no animation
+     - **tripo_convert_*.fbx**: Character models from Tripo AI, Y-up, m units → `globalScale=1.8`, `bakeAxisConversion=true`, Generic rig
+   - `.fbm` folder: texture folder auto-created by FBX exporter alongside tripo character FBX files
+   - `Renderer.bounds` in edit mode for measuring model world-space sizes
+   - Prison scene structure: `Prison_20` at `(3, 0, -7)`, children `Floor/WallBack/WallFront/WallRear/Label`, front wall at localZ=+5 (entrance faces +Z)
+
+3. Files and Code Sections:
+   - **`Assets/Editor/FBXModelImporter.cs`** (NEW)
+     - Editor tool with `[MenuItem("Tools/FBX Model Importer/Import All Models")]` and `[MenuItem("Tools/FBX Model Importer/Reconfigure Scale Only")]`
+     - Copies FBX + textures from `modeling/object/{name}/` to `Assets/Models/{name}/`
+     - `ConfigureFBX()`: sets globalScale, bakeAxisConversion, importAnimation, addCollider=false, SaveAndReimport
+     - `CreateMaterial()`: creates URP Lit material in `Assets/Models/Materials/{name}_mat.mat`
+     - `SetTex()`: assigns diffuse/normal/metallic textures; sets NormalMap importer type for `_BumpMap`
+     - `FindFBX()`: finds `base.fbx` for props, `tripo_convert_*.fbx` for characters
+     - `FindFBMTexture()`: finds .jpg in `.fbm` subfolder (had path bug; fixed manually)
+     - Model definitions table:
+     ```csharp
+     new ModelDef("convey",          "base.fbx",   1f, false, "컨베이어 머신"),
+     new ModelDef("desk",            "base.fbx",   1f, false, "수갑 책상"),
+     new ModelDef("fence",           "base.fbx",   1f, false, "채석장 울타리"),
+     new ModelDef("gate",            "base.fbx",   1f, false, "수감자 스포너 게이트"),
+     new ModelDef("handcuff",        "base.fbx",   1f, false, "수갑 소품"),
+     new ModelDef("jail1",           "base.fbx",   1f, false, "20인 감옥"),
+     new ModelDef("money",           "base.fbx",   1f, false, "돈 소품"),
+     new ModelDef("plate",           "base.fbx",   1f, false, "수갑 트레이"),
+     new ModelDef("rock",            "base.fbx",   1f, false, "바위"),
+     new ModelDef("miner",           null,         1.8f, true, "자동 채굴 NPC"),
+     new ModelDef("playcharacter",   null,         1.8f, true, "플레이어 캐릭터"),
+     new ModelDef("police",          null,         1.8f, true, "경찰 NPC"),
+     new ModelDef("prisoner_before", null,         1.8f, true, "수감자 (수갑 전)"),
+     new ModelDef("prisoner_after",  null,         1.8f, true, "수감자 (수갑 후)"),
+     ```
+
+   - **`Assets/Models/`** (NEW directory structure)
+     - `Assets/Models/{name}/base.fbx` — for props (9 models)
+     - `Assets/Models/{name}/texture_diffuse.png`, `texture_normal.png`, `texture_metallic.png`, `texture_roughness.png`, `texture_pbr.png`, `shaded.png`
+     - `Assets/Models/{name}/tripo_convert_*.fbx` — for characters (5 models)
+     - `Assets/Models/{name}/tripo_convert_*.fbm/{texture}.jpg` — character textures
+     - `Assets/Models/Materials/{name}_mat.mat` — 14 URP Lit materials
+
+4. Errors and fixes:
+   - **globalScale=100 caused 190m objects**: Initially used `globalScale=100` thinking models were in cm. But `fileScale=0.01` already handles cm→m conversion; `globalScale=100` additionally multiplied × 100 = 190m. Fixed by changing all prop globalScale to `1f`.
+   - **Character models too small (1.0m height)**: Tripo AI exports at normalized 1.0m. Fixed by setting character `globalScale=1.8f`.
+   - **Character material textures not assigned**: `FindFBMTexture()` had a path construction bug — couldn't locate `.fbm` folder textures. Fixed by directly assigning textures via `unity-cli exec` with hardcoded asset paths for each of the 5 characters.
+   - **`CopyToAssets` skips already-existing files**: After fixing globalScale, files already existed so `ImportAll` wouldn't re-copy. Added `ReconfigureScale()` menu item that only calls `ConfigureFBX()` without copying, allowing scale-only updates.
+
+5. Problem Solving:
+   - Determined correct globalScale by measuring instantiated model bounds after import (measured ~190m → divided by 100 → correct ~1.9m at globalScale=1)
+   - Used `Renderer.bounds` via `unity-cli exec` to measure world-space sizes of all 14 imported models at runtime
+   - Confirmed final imported sizes:
+     - Props: all ~1.9m in largest dimension (e.g., convey 1.90×1.07×1.19m, jail1 1.65×0.96×1.90m)
+     - Characters: all 1.8m tall (miner 0.92×1.80×1.66m, playcharacter 1.01×1.80×1.60m, etc.)
+
+6. All user messages:
+   - "a00b266f5a54aab541c00b7633e0dabdc656e9bd로 커밋 돌려줘"
+   - "진행해줘"
+   - "아래 fbx위치를 알려줄테니 모두 임포트해줘 이때 z축 맞춰주고 스케일도 게임에 맞게 해줘. 씬에 적용하지는 마. 적용은 이후 프롬프트를 통해 순차적으로 할거야. material은 각 폴더 안에 있을 거야. [list of models] 그리고 생성하면서 필요 시 collison 범위랑 모양을 수정해줘."
+   - "감옥부터 바꿔볼까 입구 방향에 유의해서"
+
+7. Pending Tasks:
+   - Apply jail1 FBX model to Prison_20 in scene, with correct entrance direction alignment
+   - Subsequent scene replacements for all other models (to be done one-by-one per user prompts)
+
+8. Current Work:
+   The user asked to start applying FBX models to the scene, beginning with the prison ("감옥부터 바꿔볼까 입구 방향에 유의해서"). The last action was checking Prison_20's current scene state:
+   - **Prison_20**: position `(3, 0, -7)`, rotation `(0,0,0)`, localScale `(1,1,1)`
+   - Children: `Floor` (localPos 0,-0.5,0), `WallBack` (4,1,0), `WallFront` (0,1,5), `WallRear` (0,1,-5), `Label`
+   - `WallFront` at localZ=+5 indicates the entrance faces the **+Z direction** (toward positive Z world space)
+   - The jail1 FBX natural size is **(1.65, 0.96, 1.90)m** at globalScale=1
+   - The Prison_20 building should be approximately **8.10 × 3.08 × 10.20m** (from previous work)
+   - `OutsideQueueStart` is at `(-2.5, 0, -7)` to the west; prisoners queue from there toward the prison entrance
+   - `CellRoot` at `(3, 0, -9)` is behind Prison_20
+
+9. Optional Next Step:
+   Apply the jail1 FBX to Prison_20 with entrance facing +Z (matching WallFront direction). The user said "감옥부터 바꿔볼까 입구 방향에 유의해서" — need to:
+   1. Check jail1 FBX's natural entrance orientation (which face is the "front/entrance")
+   2. Instantiate jail1 as a Visual child of Prison_20, rotating to match the +Z entrance direction
+   3. Scale to fit Prison_20's target dimensions (~8×3×10m)
+   4. Place bottom at Y=0 (pivot at base)
+
+   The current work stopped right after getting Prison_20 transform data — next is to inspect the jail1 FBX's orientation and apply it.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: C:\Users\qudtn\.claude\projects\E--unityProject-SupercentAssignment\739d16ee-d878-4a02-aacd-891325b2567f.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+[Claude]
+Now I have everything I need. The entrance is the west face (bars at X=-1, world). Prison_20 footprint: 8m (X) × 10m (Z). jail1 after Y=270° rotation maps model-X→world-Z, model-Z→world-X.
+
+Scales:
+- ScaleX = 10/1.65 ≈ 6.06 (model X → world Z = 10m)
+- ScaleZ = 8/1.90 ≈ 4.21 (model Z → world X = 8m)
+- ScaleY = 3.0/0.96 ≈ 3.13
+
+[Claude]
+The bounds are tiny — scale didn't apply. Let me check the transform:
+
+[Claude]
+The mesh is tiny. Let me re-instantiate at a clean location and inspect the FBX more carefully:
+
+[Claude]
+The root has `localScale=(100,100,100)` — the FBX importer's globalScale is still 100. Let me check:
+
+[Claude]
+The FBX root has intrinsic `localScale=(100,100,100)` from the Blender cm→m conversion. When I overrode it with `(6.06, 3.13, 4.21)`, I divided by 100 too early. Correct scales need the 100× factor included:
+- ScaleX = 100 × 10/1.65 = 606.06
+- ScaleY = 100 × 3/0.96 = 312.5
+- ScaleZ = 100 × 8/1.90 = 421.05
+
+[Claude]
+Let me diagnose the axis mapping empirically:
+
+[Claude]
+Now I understand the actual axis mapping. The Y bounds are the height (1.90m) at default. Corrected scales for Y=270° rotation:
+- ScaleX = 10/1.654 × 100 = 604.6 (model X → world Z, 10m deep)
+- ScaleY = 3/1.901 × 100 = 157.8 (model Y → world Y, 3m tall)
+- ScaleZ = 8/0.959 × 100 = 834.2 (model Z → world X, 8m wide)
+
+[Claude]
+Bounds are exactly right (8×3×10m). But center is at X=7 (should be 3) and Y=0 (building half underground). Need:
+- localPosition.x = -4 → shifts X center from 7 to 3
+- localPosition.y = 1.5 → lifts building to sit on ground (Y min = 0)
+
+[Claude]
+Prison building positioned correctly:
+- X: -1 to 7 (entrance at X=-1, matching bars) ✓
+- Y: 0 to 3 (sits on ground) ✓  
+- Z: -12 to -2 (centered at Z=-7) ✓
+
+Let me save the scene:
+
+[Claude]
+The TMP font error is pre-existing from before. The jail1 replacement is complete:
+
+- `Jail1_Visual` added as child of Prison_20 with rotation Y=270° (entrance faces west, -X)
+- Scale `(604.6, 157.8, 834.2)` → final world size 8×3×10m
+- LocalPosition `(-4, 1.5, 0)` → sits on ground, entrance at X=-1 (aligns with existing bars)
+- URP Lit material applied, old procedural wall renderers disabled
+
+Let me commit this progress:
+
+[Claude]
+감옥(jail1) 적용 완료:
+
+- `Prison_20` 자식으로 `Jail1_Visual` 추가
+- Y=270° 회전 → 입구가 서쪽(-X) 방향 (기존 Bar 게이트와 X=-1에서 정렬)
+- 스케일 `(604.6, 157.8, 834.2)` → 최종 월드 크기 **8×3×10m**
+- 위치 `(-4, 1.5, 0)` → 지면(Y=0)에 안착
+- 기존 procedural 벽(Floor/WallBack/WallFront/WallRear) 렌더러 비활성화 (Collider 유지)
+
+다음 모델 적용하려면 말씀해 주세요 (convey, desk, gate, rock 등).
+
+[사용자]
+돌 rock으로 바꿔줄래
+
+[Claude]
+The `RockPrefab` uses a simple cube mesh at scale (0.85, 0.55, 0.85). I'll add the rock FBX as a child visual, disable the root MeshRenderer, and keep BoxCollider + RockNode intact. Grid spacing is 1.2m so I'll target ~0.8m rock size:
+
+[Claude]
+Now I need to reset the root scale (currently 0.85,0.55,0.85 was for a unit cube) and fix the BoxCollider:
+
+[Claude]
+플레이 모드에서 실제 크기 확인:
+
+[Claude]
+The disabled root MeshRenderer (cube) is polluting the bounds check. Let me remove the old mesh components from the root entirely:
+
+[Claude]
+The rock is centered at Y=0 (extends ±0.4m). Need to lift it by 0.4m so it sits on the ground. Let me also check the RockPrefab scale:
+
+[Claude]
+Rock sits on ground, 0.72×0.80×0.62m — fits nicely in the 1.2m grid. Let me quickly check how RockNode handles mining (visibility):
+
+[Claude]
+`RockNode` uses `GetComponentsInChildren<MeshRenderer>()` at Start — it'll auto-discover `Rock_Visual`'s renderers. Let me save the scene and commit:
+
+[Claude]
+TMP font errors are all pre-existing. Let me commit:
+
+[Claude]
+바위(rock) 적용 완료:
+
+- `RockPrefab`에 `Rock_Visual` 자식 추가 (rock/base.fbx, 균등 scale=42)
+- 최종 크기: **0.72×0.80×0.62m** (1.2m 그리드 간격에 적합)
+- localPosition.y=0.4으로 지면(Y=0)에 안착
+- BoxCollider 크기 조정 (0.7×0.8×0.7)
+- `RockNode.GetComponentsInChildren`이 새 렌더러를 자동 감지해 채굴/은닉 기능 정상 작동
+
+플레이 모드 실행 시 채굴 그리드 전체에 rock FBX가 스폰됩니다. 다음 모델 적용할까요?
+
+[사용자]
+스폰되는 돌의 크기를 좀 더 키워서 빈틈이 없도록 해주고 채굴 후 등 뒤에 쌓이는 object도 rock으로 해주고 기계에 넣는 곳으로 가면 기계에 바로 이동하는 것이 아닌 돌을 놓는 곳에 쌓였다가 기계로 들어가는 연출로 해주고. 수갑이랑 돈도 적용해줘
+
+[Claude]
+여러 작업을 병렬로 파악하겠습니다.
+
+[Claude]
+이제 전체 계획을 세워서 진행합니다. 먼저 handcuff, money FBX 크기 확인과 함께 병렬로 작업합니다:
+
+[Claude]
+이제 모든 변경사항을 한번에 처리합니다. 계획:
+1. RockPrefab 크기 증가 (1.1×1.1m footprint)
+2. OrePrefab → rock FBX (작은 버전, 등에 쌓임)
+3. HandcuffPrefab → handcuff FBX
+4. CashPrefab → money FBX
+5. DropZone.cs → 광석 쌓임 + 기계로 날아가는 연출
+
+[Claude]
+이제 DropZone.cs에서 광석을 드랍존에 쌓았다가 기계로 날아가는 연출을 추가합니다:
+
+[Claude]
+컴파일 에러 없음. 크기 검증:
+
+[Claude]
+모든 크기 정상:
+- RockPrefab: **1.1×0.95×1.1m** (1.2m 간격 거의 채움) ✓
+- OrePrefab: **0.21×0.23m** (등에 쌓임, 작은 돌) ✓  
+- HandcuffPrefab: **0.23×0.05×0.22m** (납작한 수갑) ✓
+- CashPrefab: **0.19×0.10×0.01m** (얇은 돈다발) ✓
+
+[Claude]
+완료된 작업:
+
+**바위 크기 확대**
+- 그리드 바위: `1.1 × 0.95 × 1.1m` → 1.2m 간격을 거의 빈틈 없이 채움
+
+**등 뒤 쌓임 오브젝트**
+- OrePrefab: rock FBX 소형 버전 (`~0.2m`) → 등에 작은 돌들이 쌓임
+
+**OreDropZone 연출**
+- 광석을 드랍존에 가져가면 **0.5초 동안 pile**로 쌓임
+- 이후 **포물선 궤도** (0.35초)로 컨버터 기계로 날아가서 들어감
+
+**수갑/돈 교체**
+- HandcuffPrefab: handcuff FBX (`0.23m`, 납작한 수갑 모양)
+- CashPrefab: money FBX (`0.19m`, 얇은 돈다발)
+
+[사용자]
+작은버전 돌, 수갑, 돈의 크기를 좀 더 키워주고, 돈의 경우 세로로 쌓이는게 아닌 가로로 쌓이게 해줘.
+
+[Claude]
+현재 크기 확인 후 한번에 처리합니다:
+
+[Claude]
+스케일 조정 (×1.5배 증가) + 돈 가로 쌓임 로직 수정:
+
+[Claude]
+이제 PlayerStackManager에서 Cash 가로 쌓임 로직을 수정합니다:
+
+[Claude]
+완료:
+
+**크기 조정**
+- 돌 (OrePrefab): `0.31×0.34m` (1.5배 증가)
+- 수갑 (HandcuffPrefab): `0.34×0.32m` (1.5배 증가)
+- 돈 (CashPrefab): `0.38×0.20m` (2배 증가)
+
+**돈 가로 쌓임**
+- Cash 아이템이 Y(세로) 대신 **Z 방향(가로)** 으로 0.08m 간격으로 펼쳐짐
+- 플레이어 우측(`X=+0.28`)에 고정 높이(`Y=0.1`)에서 앞뒤로 퍼지는 형태
+- 10개 누적 시 약 0.8m Z 방향으로 전개
+
+[사용자]
+fence들 통과 못하도록 콜리전 생성해주고, 주인공 캐릭터 playcharacter로 바꿔줄래. 그리고 더 이상 못들게 되면 max가 다시 뜨도록 해주고, 업그레이드 완료 시 완료된 업그레이드칸이 바로 사라지도록 해줘
+
+[Claude]
+각 시스템 현황부터 파악합니다.
+
+[Claude]
+이제 4가지를 병렬로 진행합니다:
+
+[Claude]
+이제 업그레이드 즉시 사라지게 수정:
+
+[Claude]
+이제 플레이어 캐릭터 비주얼 교체:
+
+[Claude]
+캐릭터가 땅속에 묻혀있음 (minY=-0.80). 스케일을 FBX 기본값으로 유지하고 Y 위치 수정:
+
+[Claude]
+FBX 단독으로는 minY=0이지만 Player 자식으로 들어가면 중심이 Y=0에 오는 것 같음. Y offset으로 바닥에 맞춤:
+
+[Claude]
+캐릭터 발이 지면에 맞음 (minY=0.000, height≈1.6m). 에러 확인:
+
+[Claude]
+완료:
+
+**울타리 충돌**
+- 22개 fence 오브젝트에 `MeshCollider` 추가 (원본 mesh 그대로 사용, static non-convex)
+
+**플레이어 캐릭터 교체**
+- `PlayerCharacter_Visual` 자식 추가 (playcharacter FBX)
+- Body/Head 큐브 렌더러 비활성화
+- localPos.y=0.799 보정으로 발이 지면에 정확히 닿음
+
+**MAX 인디케이터**
+- `Update()`에서 매 프레임 `IsOreFull` 상태 동기화 → 가득 찼을 때 항상 표시, 빌 때 즉시 사라짐
+
+**업그레이드 즉시 사라짐**
+- 1.2초 딜레이 제거 → 완료 즉시 `gameObject.SetActive(false)`
+
+[사용자]
+돌 크기 1.2배, 작은 돌, 수갑, 돈 크기 2배로 바꿔줘
+
+[Claude]
+완료:
+
+| 프리팹 | 이전 | 이후 |
+|--------|------|------|
+| 그리드 돌 (RockPrefab) | 1.10×0.95×1.10m | **1.32×1.14×1.32m** (×1.2) |
+| 작은 돌 (OrePrefab) | 0.31×0.27×0.34m | **0.62×0.53×0.69m** (×2) |
+| 수갑 (HandcuffPrefab) | 0.34×0.08×0.32m | **0.68×0.16×0.65m** (×2) |
+| 돈 (CashPrefab) | 0.38×0.20×0.03m | **0.76×0.39×0.06m** (×2) |
+
+[사용자]
+수갑 크기 1.2배로 올려주고, 돈 같은 경우 가로로 쌓이는게 아니라 돈을 위로 보고 향하게 회전한 후 세로로 쌓이게 해줘
+
+[Claude]
+Unity 연결이 끊겼습니다. 파일을 직접 수정합니다:
+
+[Claude]
+Unity가 응답하지 않으므로 프리팹 파일을 직접 수정합니다:
+
+[Claude]
+두 프리팹 모두 현재 `Euler(90,0,0)` 회전이 이미 적용된 상태입니다. CashPrefab 회전을 identity로 변경해 수평(face-up) 방향으로 바꾸고, PlayerStackManager를 세로 쌓임으로 복구합니다:
+
+[사용자]
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   - **Apply jail1 FBX to Prison_20** (entrance facing west, -X direction, ~8×3×10m)
+   - **Replace RockPrefab** cube with rock FBX model (grid rocks: fill 1.2m cell gaps; OrePrefab: small rock for player back)
+   - **Replace OrePrefab, HandcuffPrefab, CashPrefab** with respective FBX models
+   - **OreDropZone animation**: ore piles at drop zone, then flies into converter machine
+   - **Resize items progressively** across multiple requests (×1.5, ×1.2, ×2)
+   - **Cash horizontal stacking**: spread along Z axis instead of vertical Y
+   - **Fence collision**: MeshCollider on all 22 fence objects
+   - **Player character**: replace Body/Head cubes with playcharacter FBX
+   - **MaxIndicator fix**: always show when ore stack is full
+   - **UpgradeZone**: immediately disappear on completion
+   - **Latest**: Handcuff scale ×1.2, money rotated face-up then stacked vertically
+
+2. Key Technical Concepts:
+   - Unity `ModelImporter`: `globalScale`, `useFileScale`, `bakeAxisConversion`, FBX root has intrinsic localScale=(100,100,100) for Blender cm exports
+   - `PrefabUtility.LoadPrefabContents` / `SaveAsPrefabAsset` for prefab editing
+   - `PrefabUtility.InstantiatePrefab(fbx, parent)` inside LoadPrefabContents gives localScale=(1,1,1), not (100,100,100)
+   - Prefab YAML modification structure: `m_LocalScale.x/y/z`, `m_LocalPosition.y`, `m_LocalRotation.x/y/z/w`, `m_LocalEulerAnglesHint`
+   - Blender Z-up → Unity Y-up via `bakeAxisConversion=true` (bakes into vertices, no transform rotation)
+   - Y rotation 270° for jail1: entrance faces -X (west), model-X→world-Z, model-Z→world-X
+   - `RockNode.GetComponentsInChildren<MeshRenderer>()` auto-discovers FBX child renderers
+   - Unity AABB world-space bounds for measuring actual world dimensions
+   - CharacterController on Player with center=(0,1,0) height=2
+   - PlayerStackManager: `GetLocalStackPosition()` with per-type BaseX offsets; Cash Z-spread override
+   - DropZone coroutine `OreDropAndFly`: PushItem → 0.5s wait → arc animation → ReceiveOre
+   - `MeshCollider(convex=false)` on static fence objects
+
+3. Files and Code Sections:
+   - **`Assets/Editor/FBXModelImporter.cs`**
+     - Editor tool importing 14 FBX models (9 props `globalScale=1`, 5 characters `globalScale=1.8`)
+     - `ReconfigureScale()` menu item for scale-only updates without re-copying files
+
+   - **`Assets/Scenes/GameScene.unity`**
+     - Jail1_Visual added to Prison_20: rotation Y=270°, scale (604.6,157.8,834.2), localPos (-4,1.5,0)
+     - PlayerCharacter_Visual added to Player: localPos (0,0.799,0), Body/Head MeshRenderers disabled
+     - 22 MeshColliders added to fence objects
+     - Prison_20 procedural wall MeshRenderers disabled
+
+   - **`Assets/Prefabs/RockPrefab.prefab`**
+     - Rock_Visual child: scale (76.8, 60, 90) [current after ×1.2], localPos.y=0.576
+     - BoxCollider: size (1.32, 1.14, 1.32), center.y=0.576
+     - Root: MeshRenderer/MeshFilter removed, scale=(1,1,1)
+
+   - **`Assets/Prefabs/OrePrefab.prefab`**
+     - Rock_Visual child: scale=(36,36,36), localPos.y=0.33
+     - Root: MeshRenderer/MeshFilter removed, scale=(1,1,1)
+
+   - **`Assets/Prefabs/HandcuffPrefab.prefab`**
+     - Handcuff_Visual child: scale=43.2 (just edited in YAML), localPos.y=0.108
+     - Has Euler(90,0,0) rotation [quaternion x=0.7071068, w=0.7071068]
+
+   - **`Assets/Prefabs/CashPrefab.prefab`**
+     - Money_Visual child: scale=40 (×2 from 20), localPos.y=0.144
+     - Current rotation: Euler(90,0,0) [x=0.7071068, w=0.7071068] — **PENDING CHANGE to identity for face-up**
+     - EulerAnglesHint shows (0,0,0) despite quaternion showing 90°
+
+   - **`Assets/Scripts/Interactables/DropZone.cs`**
+     - `DeliverOre` replaced with coroutine-based `OreDropAndFly`:
+     ```csharp
+     private void DeliverOre(PlayerStackManager stackManager)
+     {
+         if (!stackManager.HasItemOfType(ItemType.Ore)) return;
+         if (converterMachine == null) return;
+         StackItem ore = stackManager.RemoveTopItemOfType(ItemType.Ore);
+         if (ore == null) return;
+         StartCoroutine(OreDropAndFly(ore.gameObject));
+     }
+     private System.Collections.IEnumerator OreDropAndFly(GameObject oreObj)
+     {
+         PushItem(oreObj);
+         yield return new WaitForSeconds(0.5f);
+         if (oreObj == null) yield break;
+         items.Remove(oreObj);
+         Vector3 startPos = oreObj.transform.position;
+         oreObj.transform.SetParent(null);
+         oreObj.transform.position = startPos;
+         Vector3 endPos = converterMachine.transform.position + Vector3.up * 0.5f;
+         float duration = 0.35f; float elapsed = 0f;
+         while (elapsed < duration && oreObj != null) {
+             elapsed += Time.deltaTime;
+             float t = Mathf.Clamp01(elapsed / duration);
+             Vector3 pos = Vector3.Lerp(startPos, endPos, t);
+             pos.y += Mathf.Sin(t * Mathf.PI) * 0.8f;
+             oreObj.transform.position = pos;
+             yield return null;
+         }
+         if (oreObj != null) { converterMachine.ReceiveOre(1); Destroy(oreObj); }
+         for (int i = 0; i < items.Count; i++)
+             if (items[i] != null)
+                 items[i].transform.localPosition = new Vector3(0f, i * stackSpacingY, 0f);
+     }
+     ```
+
+   - **`Assets/Scripts/Player/PlayerStackManager.cs`**
+     - Added `Update()` for MaxIndicator sync:
+     ```csharp
+     void Update()
+     {
+         if (maxIndicatorObject != null && maxIndicatorObject.activeSelf != IsOreFull)
+             SetMaxIndicator(IsOreFull);
+     }
+     ```
+     - Modified `GetLocalStackPosition` for Cash horizontal stacking:
+     ```csharp
+     if (type == ItemType.Cash)
+         return new Vector3(0.28f, 0.10f, sameTypeCount * 0.08f);
+     return new Vector3(baseX, sameTypeCount * itemSpacingY, 0f);
+     ```
+     - **PENDING**: Change Cash back to vertical stacking with small Y spacing
+
+   - **`Assets/Scripts/Interactables/UpgradeZone.cs`**
+     - Changed: `StartCoroutine(HideAfterDelay(1.2f))` → `gameObject.SetActive(false)`
+
+4. Errors and Fixes:
+   - **globalScale=100 caused 190m objects**: Changed all prop globalScale to 1f; added `ReconfigureScale()` menu item since `CopyToAssets` skips existing files.
+   - **Character models too small**: Tripo AI exports at 1.0m → set globalScale=1.8 for 5 character models.
+   - **MeshFilter has no `enabled` property**: Removed `mf.enabled = false` line; instead removed entire MeshFilter/MeshRenderer via `DestroyImmediate`.
+   - **Compile error with array variable in foreach**: Rewrote multi-prefab loop using anonymous types.
+   - **OrePrefab minY=0.114 (not at ground)**: For OrePrefab used as stack item (not ground object), this offset is acceptable as the rock sits above the stack origin.
+   - **Jail1 scale calculation**: Initially miscalculated as (6.06, 3.13, 4.21) forgetting the 100× FBX factor; corrected to (606, 312.5, 421); further corrected based on actual Y/Z axis mapping to (604.6, 157.8, 834.2).
+   - **Rock Y offset needed**: At scale=42 inside prefab (overriding 100), model is centered at Y=0 not bottom-anchored → added Y offset=0.4 to RockPrefab Rock_Visual.
+   - **playcharacter minY=-0.80**: FBX's pivot center at Y=0 when parented to Player → applied offset 0.799m to sit on ground.
+   - **Unity connection timeout**: Unity stopped responding mid-session; switched to direct YAML editing of prefab files.
+
+5. Problem Solving:
+   - **Jail1 entrance direction**: Traced from CellManager.PrisonEntrancePos=(-9.96,0,-7) and Prison bar positions (X=-1, entire Z extent) to confirm entrance faces west (-X). Applied Y=270° rotation.
+   - **FBX axis mapping for jail1**: Empirically determined that after Y=270° rotation, model-X→world-Z and model-Z→world-X, leading to scale (604.6, 157.8, 834.2).
+   - **RockNode compatibility**: RockNode uses `GetComponentsInChildren<MeshRenderer>()` at Awake, so it automatically finds Rock_Visual's renderer for mine/hide logic.
+   - **CashPrefab rotation mystery**: Both CashPrefab and HandcuffPrefab have Euler(90,0,0) quaternion [x=0.7071068,w=0.7071068] in YAML modifications but EulerAnglesHint=(0,0,0). Measurements confirm model appears upright (Y=height dimension preserved). To achieve face-up orientation, need to change quaternion to identity.
+
+6. All User Messages:
+   - "감옥부터 바꿔볼까 입구 방향에 유의해서" (start with prison, mind entrance direction)
+   - "돌 rock으로 바꿔줄래" (replace with rock)
+   - "스폰되는 돌의 크기를 좀 더 키워서 빈틈이 없도록 해주고 채굴 후 등 뒤에 쌓이는 object도 rock으로 해주고 기계에 넣는 곳으로 가면 기계에 바로 이동하는 것이 아닌 돌을 놓는 곳에 쌓였다가 기계로 들어가는 연출로 해주고. 수갑이랑 돈도 적용해줘" (bigger rocks/fill gaps, back rocks, pile-then-fly animation, apply handcuff and money)
+   - "작은버전 돌, 수갑, 돈의 크기를 좀 더 키워주고, 돈의 경우 가로로 쌓이는게 아닌 가로로 쌓이게 해줘" (make small rock/handcuff/money bigger, money horizontal not vertical)
+   - "fence들 통과 못하도록 콜리전 생성해주고, 주인공 캐릭터 playcharacter로 바꿔줄래. 그리고 더 이상 못들게 되면 max가 다시 뜨도록 해주고, 업그레이드 완료 시 완료된 업그레이드칸이 바로 사라지도록 해줘" (fence collision, player character, max indicator fix, upgrade immediate hide)
+   - "돌 크기 1.2배, 작은 돌, 수갑, 돈 크기 2배로 바꿔줘" (rock ×1.2, items ×2)
+   - "수갑 크기 1.2배로 올려주고, 돈 같은 경우 가로로 쌓이는게 아니라 돈을 위로 보고 향하게 회전한 후 세로로 쌓이게 해줘" (handcuff ×1.2, money rotate face-up then stack vertically)
+
+7. Pending Tasks:
+   - **CashPrefab rotation**: Change Money_Visual quaternion from Euler(90,0,0) [x=0.7071068,w=0.7071068] to identity [x=0,y=0,z=0,w=1] so money lies flat (face pointing up), adjust Y offset from 0.144 to ~0.03
+   - **PlayerStackManager Cash stacking**: Change from Z-spread (`return new Vector3(0.28f, 0.10f, sameTypeCount * 0.08f)`) back to vertical Y stacking with small spacing (`return new Vector3(0.28f, sameTypeCount * 0.06f, 0f)`)
+   - **unity-cli reserialize** the edited prefab files after Unity comes back online
+   - **Commit and push** all pending changes
+
+8. Current Work:
+   Unity connection timed out mid-session. Was editing prefab YAML files directly.
+
+   **HandcuffPrefab.prefab** — COMPLETED YAML edit:
+   - Changed scale values from `36` to `43.2` (×1.2)
+   - Changed localPosition.y from `0.09` to `0.108`
+
+   **CashPrefab.prefab** — IN PROGRESS, needs these YAML edits:
+   Current state (lines 58-120):
+   ```yaml
+   propertyPath: m_LocalScale.x
+   value: 40
+   propertyPath: m_LocalScale.y
+   value: 40
+   propertyPath: m_LocalScale.z
+   value: 40
+   propertyPath: m_LocalPosition.y
+   value: 0.144
+   propertyPath: m_LocalRotation.w
+   value: 0.7071068
+   propertyPath: m_LocalRotation.x
+   value: 0.7071068    ← needs to become 0
+   propertyPath: m_LocalRotation.y
+   value: 0
+   propertyPath: m_LocalRotation.z
+   value: 0
+   ```
+   Target: rotation becomes identity (w=1, x=0, y=0, z=0), localPosition.y becomes ~0.03
+
+   **PlayerStackManager.cs** — needs revert of Cash stacking from:
+   ```csharp
+   if (type == ItemType.Cash)
+       return new Vector3(0.28f, 0.10f, sameTypeCount * 0.08f);
+   ```
+   To vertical stacking:
+   ```csharp
+   if (type == ItemType.Cash)
+       return new Vector3(0.28f, sameTypeCount * 0.06f, 0f);
+   ```
+
+9. Optional Next Step:
+   Continue the direct YAML edit of CashPrefab.prefab to change Money_Visual rotation from Euler(90,0,0) to identity (face-up orientation), as requested: "돈 같은 경우 가로로 쌓이는게 아니라 돈을 위로 보고 향하게 회전한 후 세로로 쌓이게 해줘".
+
+   Specifically:
+   - Edit `Assets/Prefabs/CashPrefab.prefab`: change `m_LocalRotation.x` from `0.7071068` to `0`, change `m_LocalRotation.w` from `0.7071068` to `1`, change `m_LocalPosition.y` from `0.144` to `0.03`
+   - Edit `Assets/Scripts/Player/PlayerStackManager.cs`: change Cash position from `new Vector3(0.28f, 0.10f, sameTypeCount * 0.08f)` to `new Vector3(0.28f, sameTypeCount * 0.06f, 0f)`
+   - Then wait for Unity to come back and use `unity-cli reserialize` to fix YAML formatting
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: C:\Users\qudtn\.claude\projects\E--unityProject-SupercentAssignment\739d16ee-d878-4a02-aacd-891325b2567f.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+[Claude]
+Now reserialize the edited prefab files:
+
+[Claude]
+Unity isn't running right now, so reserialize will have to wait. The YAML edits are complete. Let me commit the changes.
+
+[Claude]
+완료했습니다. 변경 내용:
+
+- **HandcuffPrefab**: 스케일 36 → 43.2 (×1.2), Y 오프셋 0.09 → 0.108
+- **CashPrefab**: Money_Visual 회전 Euler(90,0,0) → identity (돈 앞면이 위를 향함), Y 오프셋 0.144 → 0.03
+- **PlayerStackManager**: 돈 쌓이는 방식 Z축 펼침 → Y축 세로 쌓임 (간격 0.06f)
+
+Unity가 다시 실행되면 `unity-cli reserialize Assets/Prefabs/CashPrefab.prefab` 및 `HandcuffPrefab.prefab`을 실행해서 YAML 포맷을 정리하면 됩니다.
+
+[사용자]
+<task-notification>
+<task-id>bnvazh42z</task-id>
+<tool-use-id>toolu_01U1iDMqMh8BVAd483H32NmE</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\739d16ee-d878-4a02-aacd-891325b2567f\tasks\bnvazh42z.output</output-file>
+<status>failed</status>
+<summary>Background command "Wait and retry connection" failed with exit code 1</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\739d16ee-d878-4a02-aacd-891325b2567f\tasks\bnvazh42z.output
+
+[사용자]
+<task-notification>
+<task-id>bemjlz2j3</task-id>
+<tool-use-id>toolu_01B7RM4zh1VzXf3uVoxXRk7v</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\739d16ee-d878-4a02-aacd-891325b2567f\tasks\bemjlz2j3.output</output-file>
+<status>failed</status>
+<summary>Background command "Retry Unity connection" failed with exit code 1</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\739d16ee-d878-4a02-aacd-891325b2567f\tasks\bemjlz2j3.output
+
+[사용자]
+<task-notification>
+<task-id>bk5edx0ei</task-id>
+<tool-use-id>toolu_012PXn3MkwZdXre3TmXbtNE1</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\739d16ee-d878-4a02-aacd-891325b2567f\tasks\bk5edx0ei.output</output-file>
+<status>failed</status>
+<summary>Background command "Reserialize edited prefab files" failed with exit code 1</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\739d16ee-d878-4a02-aacd-891325b2567f\tasks\bk5edx0ei.output
+
+[사용자]
+<task-notification>
+<task-id>bxcegzz3d</task-id>
+<tool-use-id>toolu_011G8CBbj12rJ5CLABPLp1dB</tool-use-id>
+<output-file>C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\739d16ee-d878-4a02-aacd-891325b2567f\tasks\bxcegzz3d.output</output-file>
+<status>failed</status>
+<summary>Background command "Check Unity console for errors" failed with exit code 1</summary>
+</task-notification>
+Read the output file to retrieve the result: C:\Users\qudtn\AppData\Local\Temp\claude\E--unityProject-SupercentAssignment\739d16ee-d878-4a02-aacd-891325b2567f\tasks\bxcegzz3d.output
+
+[Claude]
+모두 Unity 연결 실패입니다. Unity 에디터가 열려 있지 않거나 unity-cli 서버가 꺼진 상태입니다.
+
+Unity 에디터를 열고 프로젝트를 로드한 후 아래 명령어를 직접 실행해 주세요:
+
+```
+! unity-cli reserialize Assets/Prefabs/CashPrefab.prefab
+! unity-cli reserialize Assets/Prefabs/HandcuffPrefab.prefab
+```
+
+그 후 플레이 모드로 테스트하면 됩니다.
