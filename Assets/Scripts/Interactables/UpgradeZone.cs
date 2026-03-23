@@ -129,10 +129,10 @@ public class UpgradeZone : MonoBehaviour
         foreach (var obj in objectsToActivateOnComplete)
             if (obj != null) obj.SetActive(true);
 
-        // 업그레이드 완료 → 발판 비활성화 (잠시 "DONE!" 보여준 뒤 사라짐)
+        // 업그레이드 완료 → 발판 즉시 비활성화
         if (costText != null) costText.text = "DONE!";
         SetFillBarFull();
-        StartCoroutine(HideAfterDelay(1.2f));
+        gameObject.SetActive(false);
     }
 
     private System.Collections.IEnumerator HideAfterDelay(float delay)

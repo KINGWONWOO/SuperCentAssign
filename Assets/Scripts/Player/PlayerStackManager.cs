@@ -23,6 +23,13 @@ public class PlayerStackManager : MonoBehaviour
         SetMaxIndicator(false);
     }
 
+    void Update()
+    {
+        // MAX 인디케이터 항상 IsOreFull 상태와 동기화
+        if (maxIndicatorObject != null && maxIndicatorObject.activeSelf != IsOreFull)
+            SetMaxIndicator(IsOreFull);
+    }
+
     public void SetMaxOreStack(int max)
     {
         maxOreStack = max;
