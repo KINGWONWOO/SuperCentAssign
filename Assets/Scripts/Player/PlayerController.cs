@@ -49,9 +49,7 @@ public class PlayerController : MonoBehaviour
 
         if (moveDir != Vector3.zero)
         {
-            Quaternion targetRot = Quaternion.LookRotation(moveDir, Vector3.up);
-            transform.rotation = Quaternion.Slerp(
-                transform.rotation, targetRot, settings.rotationSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.LookRotation(moveDir, Vector3.up);
         }
 
         playerAnimation?.SetSpeed(input.magnitude);
