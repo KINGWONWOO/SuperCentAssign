@@ -85,7 +85,51 @@ public class DropZone : MonoBehaviour
         if (!stackManager.HasItemOfType(ItemType.Ore)) return;
         if (converterMachine == null) return;
         StackItem ore = stackManager.RemoveTopItemOfType(ItemType.Ore);
-        if (ore != null) { converterMachine.ReceiveOre(1); Destroy(ore.gameObject); }
+        if (ore == null) return;
+
+        // 드랍존에 쌓기 → 기계로 날아가는 연출
+        StartCoroutine(OreDropAndFly(ore.gameObject));
+    }
+
+    private System.Collections.IEnumerator OreDropAndFly(GameObject oreObj)
+    {
+        // 1단계: 드랍존 pile에 물리적으로 쌓임
+        PushItem(oreObj);
+
+        yield return new WaitForSeconds(0.5f);
+        if (oreObj == null) yield break;
+
+        // pile에서 제거 후 월드 좌표 언파렌트
+        items.Remove(oreObj);
+        Vector3 startPos = oreObj.transform.position;
+        oreObj.transform.SetParent(null);
+        oreObj.transform.position = startPos;
+
+        // 2단계: 기계 쪽으로 포물선 비행
+        Vector3 endPos = converterMachine.transform.position + Vector3.up * 0.5f;
+        float duration = 0.35f;
+        float elapsed = 0f;
+
+        while (elapsed < duration && oreObj != null)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            Vector3 pos = Vector3.Lerp(startPos, endPos, t);
+            pos.y += Mathf.Sin(t * Mathf.PI) * 0.8f;
+            oreObj.transform.position = pos;
+            yield return null;
+        }
+
+        if (oreObj != null)
+        {
+            converterMachine.ReceiveOre(1);
+            Destroy(oreObj);
+        }
+
+        // 나머지 pile 재정렬
+        for (int i = 0; i < items.Count; i++)
+            if (items[i] != null)
+                items[i].transform.localPosition = new Vector3(0f, i * stackSpacingY, 0f);
     }
 
     private void PickupItem(PlayerStackManager stackManager, ItemType type)
