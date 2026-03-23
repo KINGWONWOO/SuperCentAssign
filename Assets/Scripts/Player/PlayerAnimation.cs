@@ -1,6 +1,5 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Animator))]
 public class PlayerAnimation : MonoBehaviour
 {
     private Animator animator;
@@ -11,7 +10,8 @@ public class PlayerAnimation : MonoBehaviour
 
     void Awake()
     {
-        animator = GetComponent<Animator>();
+        // Animator는 Visual 자식(FBX 루트)에 있으므로 하위 탐색
+        animator = GetComponentInChildren<Animator>();
     }
 
     public void SetSpeed(float speed)
