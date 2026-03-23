@@ -6,6 +6,7 @@ using System.Collections;
 public class PrisonerAI : MonoBehaviour
 {
     [SerializeField] private SpeechBubble speechBubble;
+    [SerializeField] private GameObject prisonerAfterPrefab;
 
     private PrisonerState state = PrisonerState.WalkingToWaitPos;
     public PrisonerState CurrentState => state;
@@ -75,6 +76,7 @@ public class PrisonerAI : MonoBehaviour
         {
             speechBubble?.Hide();
             state = PrisonerState.FullyProcessed;
+            SwapToPrisonerAfter();
             deskManager?.OnPrisonerLeft();
             prisonerSpawner?.OnSlotFreed();
             TryGoToCell();
@@ -168,6 +170,21 @@ public class PrisonerAI : MonoBehaviour
     {
         int remaining = handcuffsNeeded - handcuffsReceived;
         speechBubble?.Show($"x{remaining}");
+    }
+
+    private void SwapToPrisonerAfter()
+    {
+        Transform visual = transform.Find("Visual");
+        if (visual != null) Destroy(visual.gameObject);
+
+        if (prisonerAfterPrefab != null)
+        {
+            GameObject newVisual = Instantiate(prisonerAfterPrefab, transform);
+            newVisual.name = "Visual";
+            newVisual.transform.localPosition = Vector3.zero;
+            newVisual.transform.localRotation = Quaternion.identity;
+            newVisual.transform.localScale = Vector3.one;
+        }
     }
 
     private void FaceTarget(Vector3 target)
