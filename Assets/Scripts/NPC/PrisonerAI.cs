@@ -182,7 +182,7 @@ public class PrisonerAI : MonoBehaviour
             GameObject newVisual = Instantiate(prisonerAfterPrefab, transform);
             newVisual.name = "Visual";
             newVisual.transform.localPosition = Vector3.zero;
-            newVisual.transform.localEulerAngles = new Vector3(-90f, -90f, 0f);
+            newVisual.transform.localEulerAngles = new Vector3(90f, -90f, 0f);
             newVisual.transform.localScale = Vector3.one;
         }
     }
