@@ -50,7 +50,7 @@ public class PlayerController : MonoBehaviour
         if (moveDir != Vector3.zero)
         {
             Quaternion targetRot = Quaternion.LookRotation(moveDir, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(
+            transform.rotation = Quaternion.Slerp(
                 transform.rotation, targetRot, settings.rotationSpeed * Time.deltaTime);
         }
 
