@@ -14,6 +14,8 @@ public class AutoSellNPC : MonoBehaviour
     private float moveSpeed;
     private int batchSize;
     private List<GameObject> carrying = new List<GameObject>();
+    private Animator animator;
+    private static readonly int SpeedHash = Animator.StringToHash("Speed");
 
     void Start()
     {
@@ -45,6 +47,7 @@ public class AutoSellNPC : MonoBehaviour
         GameSettings s = GameManager.Instance.Settings;
         moveSpeed = s.autoSellMoveSpeed;
         batchSize = s.autoSellBatchSize;
+        animator = GetComponentInChildren<Animator>(true);
         StartCoroutine(AutoSellRoutine());
     }
 
@@ -86,6 +89,7 @@ public class AutoSellNPC : MonoBehaviour
 
     private IEnumerator WalkTo(Vector3 destination)
     {
+        animator?.SetFloat(SpeedHash, 1f);
         while (Vector3.Distance(transform.position, destination) > 0.2f)
         {
             transform.position = Vector3.MoveTowards(
@@ -96,5 +100,6 @@ public class AutoSellNPC : MonoBehaviour
             yield return null;
         }
         transform.position = destination;
+        animator?.SetFloat(SpeedHash, 0f);
     }
 }

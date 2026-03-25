@@ -8,7 +8,7 @@ public class UpgradeZone : MonoBehaviour
     [SerializeField] private UpgradeType upgradeType;
 
     [Header("World Space UI")]
-    [SerializeField] private TextMeshPro costText;
+    private TextMeshPro costText;
 
     [Header("Visual Fill Bar")]
     [SerializeField] private Transform fillBar;
@@ -37,12 +37,23 @@ public class UpgradeZone : MonoBehaviour
     private float lastContributeTime = -999f;
     private const float contributeInterval = 0.5f;
 
-    void Start()
+    void Awake()
     {
+        var ct = transform.Find("CostText");
+        if (ct != null) costText = ct.GetComponent<TextMeshPro>();
+    }
+
+    System.Collections.IEnumerator Start()
+    {
+        yield return new WaitUntil(() =>
+            GameManager.Instance != null && GameManager.Instance.Settings != null);
         requiredCost = GetCost();
         InitFillBar();
         RefreshUI();
     }
+
+    public int GetRequiredCost() => requiredCost;
+    public int GetPaidAmount() => paidAmount;
 
     private int GetCost()
     {
@@ -65,17 +76,30 @@ public class UpgradeZone : MonoBehaviour
         if (!stackManager.HasItemOfType(ItemType.Cash)) return;
         if (Time.time - lastContributeTime < contributeInterval) return;
 
+        // Lazy init: GameManager가 Start() 전에 미초기화된 경우 대비
+        if (requiredCost == 0)
+        {
+            requiredCost = GetCost();
+            if (requiredCost == 0) return;
+            RefreshUI();
+            RefreshFillBar();
+        }
+
         if (paidAmount >= requiredCost)
         {
             ExecuteUpgrade(toolManager);
             return;
         }
 
-        StackItem cashItem = stackManager.RemoveTopItemOfType(ItemType.Cash);
-        if (cashItem == null) return;
+        int cashValue = GameManager.Instance.Settings.cashPerHandcuff;
+        if (!CurrencyManager.Instance.SpendCash(cashValue)) return;
 
-        int cashValue = GameManager.Instance.Settings.cashPerHandcuff; // 10원 단위
-        CurrencyManager.Instance.SpendCash(cashValue);
+        StackItem cashItem = stackManager.RemoveTopItemOfType(ItemType.Cash);
+        if (cashItem == null)
+        {
+            CurrencyManager.Instance.AddCash(cashValue);
+            return;
+        }
         Destroy(cashItem.gameObject);
 
         paidAmount += cashValue;

@@ -4,7 +4,8 @@ using TMPro;
 
 // 감방 수용 관리. 기본 20명, 업그레이드 시 100명.
 // 초과 시 수감자는 감옥 앞에서 FIFO 줄을 서며 대기.
-// 모든 waypoint는 MarkerVis 자식이 있으면 그 위치를 사용.
+// stackPoints 배열이 있으면 해당 Transform 위치를 사용; 없으면 격자 계산.
+// 시각적 마커를 이동하면 실제 스택 위치도 함께 변경됨.
 public class CellManager : MonoBehaviour
 {
     [SerializeField] private Transform cellRoot;             // 감방 내부 위치들의 부모
@@ -12,8 +13,11 @@ public class CellManager : MonoBehaviour
     [SerializeField] private float queueSpacing = 1.5f;      // 줄 서는 간격
     [SerializeField] private TextMeshPro cellCounterText;
 
-    // 수감자 Y 오프셋: 캡슐 반높이(0.85) 만큼 올려서 바닥에 서도록
-    private const float PRISONER_Y_OFFSET = 0.85f;
+    [Tooltip("수감자 스택 포인트 마커 (비어 있으면 격자 계산 사용). Inspector에서 이동 시 실제 스택 위치도 변경됨.")]
+    [SerializeField] private Transform[] stackPoints;
+
+    // 수감자 pivot이 발 위치(Y=0)이므로 추가 오프셋 불필요
+    private const float PRISONER_Y_OFFSET = 0f;
 
     private int capacity;
     private List<PrisonerAI> prisonersInCell  = new List<PrisonerAI>();
@@ -55,17 +59,29 @@ public class CellManager : MonoBehaviour
     {
         if (IsFull || cellRoot == null) return null;
 
-        int col = nextCellIndex % 5;
-        int row = nextCellIndex / 5;
+        Vector3 pos;
+        Quaternion rot;
 
-        // cellRoot.rotation 반영, MarkerVis 위치를 그리드 원점으로 사용
-        Vector3 offset = new Vector3(col * 1.5f, 0f, row * 1.5f);
-        Vector3 pos    = CellGridOrigin + cellRoot.rotation * offset;
-        pos.y          = PRISONER_Y_OFFSET; // 수감자가 바닥에 서도록
+        if (stackPoints != null && nextCellIndex < stackPoints.Length && stackPoints[nextCellIndex] != null)
+        {
+            // 시각적 마커 위치 사용
+            pos = stackPoints[nextCellIndex].position;
+            rot = stackPoints[nextCellIndex].rotation;
+        }
+        else
+        {
+            // 격자 계산 fallback
+            int col = nextCellIndex % 5;
+            int row = nextCellIndex / 5;
+            Vector3 offset = new Vector3(col * 1.5f, 0f, row * 1.5f);
+            pos = CellGridOrigin + cellRoot.rotation * offset;
+            pos.y = PRISONER_Y_OFFSET;
+            rot = cellRoot.rotation;
+        }
 
         GameObject slot = new GameObject($"CellSlot_{nextCellIndex}");
         slot.transform.position = pos;
-        slot.transform.rotation = cellRoot.rotation;
+        slot.transform.rotation = rot;
         slot.transform.SetParent(cellRoot);
 
         nextCellIndex++;
@@ -146,8 +162,21 @@ public class CellManager : MonoBehaviour
 #if UNITY_EDITOR
     void OnDrawGizmos()
     {
-        // ── 감방 슬롯 미리보기 ─────────────────────────────────────
-        if (cellRoot != null)
+        // ── 명시적 스택 포인트 마커 ────────────────────────────────
+        if (stackPoints != null && stackPoints.Length > 0)
+        {
+            for (int i = 0; i < stackPoints.Length; i++)
+            {
+                if (stackPoints[i] == null) continue;
+                float t = (float)i / Mathf.Max(1, stackPoints.Length - 1);
+                Gizmos.color = Color.Lerp(new Color(0.2f, 1f, 0.3f, 0.9f),
+                                          new Color(0.1f, 0.4f, 0.2f, 0.6f), t);
+                Gizmos.DrawWireCube(stackPoints[i].position, new Vector3(0.9f, 1.8f, 0.9f));
+                UnityEditor.Handles.Label(stackPoints[i].position + Vector3.up * 1.1f, $"S{i}");
+            }
+        }
+        // ── 격자 계산 미리보기 (stackPoints 미설정 시) ──────────────
+        else if (cellRoot != null)
         {
             Vector3 origin = CellGridOrigin;
             for (int i = 0; i < 20; i++)

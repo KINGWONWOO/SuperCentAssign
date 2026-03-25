@@ -6,6 +6,12 @@ public class RockNode : MonoBehaviour
     [SerializeField] private MeshRenderer[] nodeMeshes;
     [SerializeField] private Collider nodeCollider;
 
+    [Header("채굴 이펙트")]
+    [SerializeField] private AudioClip mineSound;
+    [SerializeField] private GameObject mineParticlePrefab;
+
+    private static AudioSource _sharedAudio;
+
     public bool IsActive { get; private set; } = true;
     public Vector2Int GridCoord { get; set; }
 
@@ -26,11 +32,32 @@ public class RockNode : MonoBehaviour
         if (!IsActive) return;
         IsActive = false;
         SetVisible(false);
+        PlayMineEffects();
         StartCoroutine(RespawnRoutine());
 
         // 스택 가득 찼어도 AddOre 호출 — 내부에서 false 반환하지만 돌은 이미 사라짐
         if (stackManager != null && orePrefab != null)
             stackManager.AddOre(orePrefab);
+    }
+
+    private void PlayMineEffects()
+    {
+        if (mineParticlePrefab != null)
+        {
+            GameObject fx = Instantiate(mineParticlePrefab,
+                transform.position + Vector3.up * 0.3f, Quaternion.identity);
+            Destroy(fx, 3f);
+        }
+        if (mineSound != null)
+        {
+            if (_sharedAudio == null)
+            {
+                var go = new GameObject("SharedMineAudio");
+                _sharedAudio = go.AddComponent<AudioSource>();
+                Object.DontDestroyOnLoad(go);
+            }
+            _sharedAudio.PlayOneShot(mineSound);
+        }
     }
 
     // 워커 NPC 채굴 — 광석을 Converter로 직접 전달 (스택 없음)

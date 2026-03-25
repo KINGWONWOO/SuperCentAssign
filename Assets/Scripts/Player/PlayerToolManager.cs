@@ -2,8 +2,10 @@ using UnityEngine;
 
 public class PlayerToolManager : MonoBehaviour
 {
-    [Tooltip("0=곡괭이, 1=드릴, 2=드릴 차 모델 오브젝트")]
+    [Tooltip("0=곡괭이, 1=미사용(드릴은 PlayerAnimation.drillModel이 관리), 2=드릴 차 모델")]
     [SerializeField] private GameObject[] toolModels;
+
+    public GameObject drillVisualObject;
 
     private int currentLevel = 0;
 
@@ -14,6 +16,7 @@ public class PlayerToolManager : MonoBehaviour
     void Start()
     {
         ApplyToolModel(currentLevel);
+        if (drillVisualObject != null) drillVisualObject.SetActive(false);
     }
 
     public void SetLevel(int level)
@@ -43,6 +46,12 @@ public class PlayerToolManager : MonoBehaviour
         GameSettings s = GameManager.Instance.Settings;
         int idx = Mathf.Clamp(currentLevel, 0, s.miningWidths.Length - 1);
         return s.miningWidths[idx];
+    }
+
+    public float GetMiningForwardOffset()
+    {
+        if (currentLevel == 2) return 2.5f; // DrillCar: 더 앞에서 채굴
+        return 0f;
     }
 
     private void ApplyToolModel(int level)

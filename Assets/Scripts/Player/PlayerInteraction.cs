@@ -8,6 +8,7 @@ public class PlayerInteraction : MonoBehaviour
     private PlayerStackManager stackManager;
     private PlayerAnimation playerAnimation;
     private PlayerToolManager toolManager;
+    private MiningAnimNotifier miningNotifier;
 
     private MiningGrid currentMiningGrid;
     private DropZone currentDropZone;
@@ -21,9 +22,19 @@ public class PlayerInteraction : MonoBehaviour
 
     void Awake()
     {
-        stackManager = GetComponent<PlayerStackManager>();
+        stackManager    = GetComponent<PlayerStackManager>();
         playerAnimation = GetComponent<PlayerAnimation>();
-        toolManager = GetComponent<PlayerToolManager>();
+        toolManager     = GetComponent<PlayerToolManager>();
+
+        // MiningAnimNotifier: Animator가 있는 Visual 자식 GO에 부착
+        var animGO = GetComponentInChildren<Animator>(true)?.gameObject;
+        if (animGO != null)
+        {
+            miningNotifier = animGO.GetComponent<MiningAnimNotifier>();
+            if (miningNotifier == null)
+                miningNotifier = animGO.AddComponent<MiningAnimNotifier>();
+            miningNotifier.OnMiningImpact += OnPickaxeImpact;
+        }
     }
 
     void OnTriggerEnter(Collider other)
@@ -57,34 +68,97 @@ public class PlayerInteraction : MonoBehaviour
         currentMiningGrid = null;
         if (miningCoroutine != null) { StopCoroutine(miningCoroutine); miningCoroutine = null; }
         playerAnimation?.SetMining(false);
-        // DrillCar 탑승 모드 해제
-        if (toolManager != null && toolManager.CurrentLevel == ToolLevel.DrillCar)
-            playerAnimation?.SetInVehicle(false);
+        playerAnimation?.SetDrilling(false);
+        playerAnimation?.SetBulldozerMode(false);
+        UpdateDrillVisual(false);
+        UpdatePickaxeVisual(false);
     }
 
     private IEnumerator MiningRoutine()
     {
-        bool isDrillCar = toolManager != null && toolManager.CurrentLevel == ToolLevel.DrillCar;
-        if (isDrillCar) playerAnimation?.SetInVehicle(true);
-        else playerAnimation?.SetMining(true);
+        ToolLevel currentLevel = toolManager != null ? toolManager.CurrentLevel : ToolLevel.Pickaxe;
+
+        if (currentLevel == ToolLevel.DrillCar)
+        {
+            playerAnimation?.SetBulldozerMode(true);
+        }
+        else if (currentLevel == ToolLevel.Drill)
+        {
+            playerAnimation?.SetDrilling(true);
+            UpdateDrillVisual(true);
+        }
+        else
+        {
+            playerAnimation?.SetMining(true);
+            UpdatePickaxeVisual(true);
+        }
 
         while (currentMiningGrid != null)
         {
-            int width = toolManager != null ? toolManager.GetMiningWidth() : 1;
+            int width    = toolManager != null ? toolManager.GetMiningWidth() : 1;
             float interval = toolManager != null ? toolManager.GetMiningInterval() : 1f;
 
-            // 채굴 실행 (스택 가득 찼어도 돌은 사라짐)
-            currentMiningGrid.MineAt(transform.position, width, stackManager);
-
-            if (interval <= 0f)
-                yield return new WaitForSeconds(0.1f); // 드릴/드릴 차: 0.1s 폴링
+            if (currentLevel == ToolLevel.Pickaxe)
+            {
+                // 곡괭이: MiningAnimNotifier 이벤트로 채굴 (OnPickaxeImpact)
+                yield return new WaitForSeconds(interval > 0f ? interval : 0.1f);
+            }
             else
-                yield return new WaitForSeconds(interval);
+            {
+                // 드릴/불도저: 타이머 기반 연속 채굴
+                float wait = interval <= 0f ? 0.1f : interval;
+                yield return new WaitForSeconds(wait);
+
+                if (currentMiningGrid != null)
+                {
+                    float fwdOffset = toolManager != null ? toolManager.GetMiningForwardOffset() : 0f;
+                    float spacing = GameManager.Instance?.Settings.gridSpacingZ ?? 1.2f;
+                    Vector3 minePos = transform.position + transform.forward * (spacing + fwdOffset);
+                    currentMiningGrid.MineAt(minePos, width, stackManager);
+                }
+            }
         }
 
         playerAnimation?.SetMining(false);
-        if (isDrillCar || (toolManager != null && toolManager.CurrentLevel == ToolLevel.DrillCar))
-            playerAnimation?.SetInVehicle(false);
+        playerAnimation?.SetDrilling(false);
+        playerAnimation?.SetBulldozerMode(false);
+        UpdateDrillVisual(false);
+        UpdatePickaxeVisual(false);
+    }
+
+    // 곡괭이 애니메이션 임팩트 타이밍(~69% normalizedTime)에 호출됨
+    private void OnPickaxeImpact()
+    {
+        if (currentMiningGrid == null) return;
+        if (toolManager != null && toolManager.CurrentLevel != ToolLevel.Pickaxe) return;
+        DoMine();
+    }
+
+    private void DoMine()
+    {
+        if (currentMiningGrid == null) return;
+        int width = toolManager != null ? toolManager.GetMiningWidth() : 1;
+        float spacing = GameManager.Instance?.Settings.gridSpacingZ ?? 1.2f;
+        Vector3 minePos = transform.position + transform.forward * spacing;
+        currentMiningGrid.MineAt(minePos, width, stackManager);
+    }
+
+    private void UpdateDrillVisual(bool isVisible)
+    {
+        if (toolManager == null || toolManager.drillVisualObject == null) return;
+        if (toolManager.CurrentLevel == ToolLevel.Drill)
+            toolManager.drillVisualObject.SetActive(isVisible);
+        else
+            toolManager.drillVisualObject.SetActive(false);
+    }
+
+    private void UpdatePickaxeVisual(bool isVisible)
+    {
+        if (toolManager == null) return;
+        if (toolManager.CurrentLevel == ToolLevel.Pickaxe)
+            playerAnimation?.SetPickaxeVisible(isVisible);
+        else
+            playerAnimation?.SetPickaxeVisible(false);
     }
 
     // ─── Drop Zone ────────────────────────────────────────────────
