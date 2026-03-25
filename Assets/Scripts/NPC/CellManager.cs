@@ -48,8 +48,10 @@ public class CellManager : MonoBehaviour
         }
     }
 
-    void Start()
+    System.Collections.IEnumerator Start()
     {
+        yield return new UnityEngine.WaitUntil(() =>
+            GameManager.Instance != null && GameManager.Instance.Settings != null);
         capacity = GameManager.Instance.Settings.defaultCellCapacity;
         RefreshCounter();
     }

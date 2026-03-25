@@ -69,6 +69,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nodeMeshes: []
   nodeCollider: {fileID: 0}
+  mineSound: {fileID: 0}
+  mineParticlePrefab: {fileID: 0}
 --- !u!1001 &8483521377233494903
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -100,7 +102,7 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 3a655da42dd13534797b435305c67a66,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.57600003
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3a655da42dd13534797b435305c67a66,
         type: 3}

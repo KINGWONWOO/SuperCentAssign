@@ -19,6 +19,9 @@ public class SoundManager : MonoBehaviour
     private AudioSource bgmSource;
     private AudioSource sfxSource;
 
+    private float lastMiningTime = -99f;
+    private const float miningCooldown = 0.1f;  // 100ms 내 중복 채굴음 무시
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -44,7 +47,12 @@ public class SoundManager : MonoBehaviour
         }
     }
 
-    public void PlayMining()  => PlaySFX(miningClip);
+    public void PlayMining()
+    {
+        if (Time.time - lastMiningTime < miningCooldown) return;
+        lastMiningTime = Time.time;
+        PlaySFX(miningClip);
+    }
     public void PlayStack()   => PlaySFX(stackClip);
     public void PlayUpgrade() => PlaySFX(upgradeClip);
 

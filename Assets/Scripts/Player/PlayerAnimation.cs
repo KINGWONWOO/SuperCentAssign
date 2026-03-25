@@ -68,6 +68,12 @@ public class PlayerAnimation : MonoBehaviour
         animator?.SetBool(IsInVehicleHash, active);
         if (bulldozerVisualObject != null)
             bulldozerVisualObject.SetActive(active);
+
+        // 불도저 모드 시 플레이어 캐릭터 메시 숨기기 (PlayerCharacter_Visual/Mesh)
+        var visual = transform.Find("PlayerCharacter_Visual");
+        var meshGO = visual != null ? visual.Find("Mesh") : null;
+        if (meshGO != null)
+            meshGO.gameObject.SetActive(!active);
     }
 
     public void SetPickaxeVisible(bool visible)
