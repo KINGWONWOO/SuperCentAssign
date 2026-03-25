@@ -101,7 +101,7 @@ public class PrisonerAI : MonoBehaviour
         SetMovement(WalkTo(newPos.position, () =>
         {
             state = PrisonerState.WaitingOutsideCell;
-            speechBubble?.Show("No Cell!");
+            speechBubble?.Show("no\ncell!");
         }));
     }
 
@@ -135,7 +135,7 @@ public class PrisonerAI : MonoBehaviour
                 SetMovement(WalkTo(outsidePos.position, () =>
                 {
                     state = PrisonerState.WaitingOutsideCell;
-                    speechBubble?.Show("No Cell!");
+                    speechBubble?.Show("no\ncell!");
                 }));
             }
         }
@@ -182,6 +182,7 @@ public class PrisonerAI : MonoBehaviour
     {
         Transform visual = transform.Find("Visual");
         if (visual != null) Destroy(visual.gameObject);
+        animator = null;  // WalkTo 코루틴에서 MissingReferenceException 방지
 
         if (prisonerAfterPrefab != null)
         {

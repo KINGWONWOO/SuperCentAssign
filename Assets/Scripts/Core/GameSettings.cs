@@ -37,6 +37,7 @@ public class GameSettings : ScriptableObject
     [Header("Prisoner")]
     public float prisonerMoveSpeed = 3.5f;
     public int maxPrisonersInSystem = 2;
+    public float prisonerSpawnInterval = 3f;
 
     [Header("Cell")]
     public int defaultCellCapacity = 20;
@@ -48,6 +49,10 @@ public class GameSettings : ScriptableObject
     public int workerHireCost = 40;
     public int autoSellCost = 50;
     public int prisonExpandCost = 50;
+
+    [Header("Bulldozer")]
+    [Tooltip("불도저 채굴 시 앞방향 기준 추가로 채굴할 뒤쪽 행 수")]
+    public int bulldozerRearDepth = 2;
 
     [Header("Worker NPC")]
     public float workerMoveSpeed = 3f;

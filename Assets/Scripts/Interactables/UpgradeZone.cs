@@ -31,6 +31,9 @@ public class UpgradeZone : MonoBehaviour
     [Header("업그레이드 완료 시 활성화할 오브젝트들")]
     [SerializeField] private GameObject[] objectsToActivateOnComplete;
 
+    [Header("업그레이드 완료 파티클")]
+    [SerializeField] private GameObject upgradeParticlePrefab;
+
     private int paidAmount = 0;
     private int requiredCost;
     private bool upgradeCompleted = false;
@@ -121,7 +124,7 @@ public class UpgradeZone : MonoBehaviour
             UpgradeType.DrillCar => level >= 1,
             UpgradeType.WorkerHire => level >= 1,
             UpgradeType.AutoSell => level >= 1,
-            UpgradeType.PrisonExpand => level >= 2,
+            UpgradeType.PrisonExpand => true,
             _ => false
         };
     }
@@ -130,6 +133,14 @@ public class UpgradeZone : MonoBehaviour
     {
         upgradeCompleted = true;
         SoundManager.Instance?.PlayUpgrade();
+
+        // 업그레이드 완료 반짝이 파티클
+        if (upgradeParticlePrefab != null)
+        {
+            var fx = Instantiate(upgradeParticlePrefab,
+                transform.position + Vector3.up * 1f, Quaternion.identity);
+            Destroy(fx, 3f);
+        }
 
         switch (upgradeType)
         {
@@ -172,16 +183,20 @@ public class UpgradeZone : MonoBehaviour
 
         // 7열 그리드에서 아래쪽 3열(col 4, 5, 6)을 각 워커가 담당
         int[] cols = { 4, 5, 6 };
+        GameSettings s = GameManager.Instance.Settings;
+
         for (int i = 0; i < 3; i++)
         {
-            Vector3 spawnPos = workerSpawnPoints != null && i < workerSpawnPoints.Length
+            // 그리드 밖(row0 기준 -2칸 앞) 스폰 위치 계산
+            Vector3 row0Pos = miningGrid.GetNodeWorldPos(cols[i], 0);
+            Vector3 preGridPos = workerSpawnPoints != null && i < workerSpawnPoints.Length
                 ? workerSpawnPoints[i].position
-                : miningGrid.GetNodeWorldPos(cols[i], 0);
+                : row0Pos - miningGrid.transform.forward * (s.gridSpacingZ * 2f);
 
-            GameObject obj = Instantiate(workerNpcPrefab, spawnPos, Quaternion.identity);
+            GameObject obj = Instantiate(workerNpcPrefab, preGridPos, Quaternion.identity);
             WorkerNPC w = obj.GetComponent<WorkerNPC>();
             if (w == null) w = obj.AddComponent<WorkerNPC>();
-            w.Initialize(miningGrid, cols[i]);
+            w.Initialize(miningGrid, cols[i], preGridPos);
         }
     }
 

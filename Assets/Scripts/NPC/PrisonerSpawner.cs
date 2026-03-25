@@ -17,6 +17,8 @@ public class PrisonerSpawner : MonoBehaviour
     private int prisonersInSystem = 0;
     private bool deskOccupied = false;
     private int maxInSystem;
+    private float spawnInterval;
+    private bool spawnCooldown = false;
 
     // MarkerVis 자식이 있으면 그 위치 반환, 없으면 부모 위치
     private static Vector3 GetMarkerPos(Transform t)
@@ -28,8 +30,12 @@ public class PrisonerSpawner : MonoBehaviour
 
     void Start()
     {
-        maxInSystem = GameManager.Instance.Settings.maxPrisonersInSystem;
+        var s = GameManager.Instance.Settings;
+        maxInSystem = s.maxPrisonersInSystem;
+        spawnInterval = s.prisonerSpawnInterval;
+        // 첫 번째 즉시 스폰, 이후는 spawnInterval 간격으로
         TrySpawn();
+        StartCoroutine(SpawnWithDelay());
     }
 
     // PrisonerAI가 WaitPosition에 도착했을 때 호출
@@ -49,7 +55,7 @@ public class PrisonerSpawner : MonoBehaviour
         prisonersInSystem--;
         deskOccupied = false;
         AdvanceQueue();
-        TrySpawn();
+        StartCoroutine(SpawnWithDelay());
     }
 
     private void AdvanceQueue()
@@ -67,10 +73,24 @@ public class PrisonerSpawner : MonoBehaviour
         }
     }
 
+    private System.Collections.IEnumerator SpawnWithDelay()
+    {
+        if (spawnCooldown) yield break;
+        spawnCooldown = true;
+        yield return new UnityEngine.WaitForSeconds(spawnInterval);
+        spawnCooldown = false;
+        // 빈 슬롯만큼 채워서 재개
+        while (prisonersInSystem < maxInSystem && waitQueue.Count < maxInSystem)
+            TrySpawn();
+    }
+
+    private const int maxOutsideQueue = 4;
+
     private void TrySpawn()
     {
         if (prisonersInSystem >= maxInSystem) return;
         if (waitQueue.Count >= maxInSystem) return;
+        if (cellManager != null && cellManager.OutsideQueueCount >= maxOutsideQueue) return;
         if (prisonerPrefab == null || spawnPoint == null) return;
 
         Vector3 dest = GetQueuePosition(waitQueue.Count);

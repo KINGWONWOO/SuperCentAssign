@@ -73,20 +73,25 @@ public class MiningGrid : MonoBehaviour
         bc.center = Vector3.zero;
     }
 
-    public void MineAt(Vector3 worldPos, int width, PlayerStackManager stackManager)
+    public void MineAt(Vector3 worldPos, int width, PlayerStackManager stackManager, int rearDepth = 0)
     {
         Vector2Int coord = WorldToGrid(worldPos);
         int half = width / 2;
 
-        for (int dc = -half; dc <= half; dc++)
+        // dr=0: 앞 행, dr<0: 뒤쪽 행 (rearDepth만큼 추가)
+        for (int dr = -rearDepth; dr <= 0; dr++)
         {
-            int col = coord.x + dc;
-            if (col < 0 || col >= columns) continue;
-            if (coord.y < 0 || coord.y >= rows) continue;
+            for (int dc = -half; dc <= half; dc++)
+            {
+                int col = coord.x + dc;
+                int row = coord.y + dr;
+                if (col < 0 || col >= columns) continue;
+                if (row < 0 || row >= rows) continue;
 
-            RockNode node = grid[col, coord.y];
-            if (node != null && node.IsActive)
-                node.Mine(stackManager, orePrefab);
+                RockNode node = grid[col, row];
+                if (node != null && node.IsActive)
+                    node.Mine(stackManager, orePrefab);
+            }
         }
     }
 

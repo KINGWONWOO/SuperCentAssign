@@ -42,10 +42,21 @@ public class CellManagerEditor : Editor
         var mv = cellRoot.Find("MarkerVis");
         if (mv != null) origin = mv.position;
 
+        // Read grid rotation/columns/spacing from CellManager
+        SerializedProperty rotYProp      = so.FindProperty("stackGridRotationY");
+        SerializedProperty colsProp      = so.FindProperty("stackGridColumns");
+        SerializedProperty spacingProp   = so.FindProperty("stackGridSpacing");
+        float rotY    = rotYProp    != null ? rotYProp.floatValue    : 90f;
+        int   cols    = colsProp    != null ? colsProp.intValue       : 5;
+        float spacing = spacingProp != null ? spacingProp.floatValue  : 1.5f;
+        if (cols <= 0) cols = 5;
+        Quaternion gridRot = Quaternion.Euler(0f, rotY, 0f);
+
         for (int i = 0; i < count; i++)
         {
-            int col = i % 5, row = i / 5;
-            Vector3 offset = rot * new Vector3(col * 1.5f, 0f, row * 1.5f);
+            int col = i % cols, row = i / cols;
+            Vector3 rawOffset = new Vector3(col * spacing, 0f, row * spacing);
+            Vector3 offset = rot * gridRot * rawOffset;
             Vector3 pos = origin + offset;
 
             GameObject marker = new GameObject($"StackPoint_{i:D2}");

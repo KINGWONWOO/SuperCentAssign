@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 
@@ -16,6 +17,30 @@ public class CellManager : MonoBehaviour
     [Tooltip("수감자 스택 포인트 마커 (비어 있으면 격자 계산 사용). Inspector에서 이동 시 실제 스택 위치도 변경됨.")]
     [SerializeField] private Transform[] stackPoints;
 
+    [Header("감옥 비주얼 (꽉 차면 jail2로 교체)")]
+    [Tooltip("기본 감옥 모델 (여유 있을 때)")]
+    [SerializeField] private GameObject jail1Visual;
+    [Tooltip("만석 감옥 모델 (꽉 찼을 때)")]
+    [SerializeField] private GameObject jail2Visual;
+
+    [Header("만석 시 업그레이드 활성화")]
+    [Tooltip("감옥이 꽉 차면 활성화할 PrisonExpand UpgradeZone")]
+    [SerializeField] private GameObject prisonExpandUpgrade;
+    [Tooltip("카메라 팬 연동")]
+    [SerializeField] private CameraFollow cameraFollow;
+    [Tooltip("카메라가 업그레이드 존을 보여줄 초 수")]
+    [SerializeField] private float cameraPanHoldDuration = 2f;
+
+    private bool fullNotified = false;
+
+    [Header("격자 방향 (stackPoints 미설정 시)")]
+    [Tooltip("격자 배치 방향을 Y축 기준으로 회전 (0=기본, 90=+90도). 씬 뷰 Gizmo에서 실시간 확인 가능.")]
+    [SerializeField] private float stackGridRotationY = 90f;
+    [Tooltip("열 수 (가로)")]
+    [SerializeField] private int stackGridColumns = 5;
+    [Tooltip("열/행 간격")]
+    [SerializeField] private float stackGridSpacing = 1.5f;
+
     // 수감자 pivot이 발 위치(Y=0)이므로 추가 오프셋 불필요
     private const float PRISONER_Y_OFFSET = 0f;
 
@@ -25,6 +50,7 @@ public class CellManager : MonoBehaviour
     private int nextCellIndex = 0;
 
     public bool IsFull => prisonersInCell.Count >= capacity;
+    public int OutsideQueueCount => outsideQueue.Count;
 
     // 감옥 입구 경유 포인트 — outsideQueueStart의 MarkerVis 위치 사용
     public Vector3 PrisonEntrancePos
@@ -72,10 +98,11 @@ public class CellManager : MonoBehaviour
         }
         else
         {
-            // 격자 계산 fallback
-            int col = nextCellIndex % 5;
-            int row = nextCellIndex / 5;
-            Vector3 offset = new Vector3(col * 1.5f, 0f, row * 1.5f);
+            // 격자 계산 fallback — stackGridRotationY 적용
+            int col = nextCellIndex % stackGridColumns;
+            int row = nextCellIndex / stackGridColumns;
+            Vector3 rawOffset = new Vector3(col * stackGridSpacing, 0f, row * stackGridSpacing);
+            Vector3 offset = Quaternion.Euler(0f, stackGridRotationY, 0f) * rawOffset;
             pos = CellGridOrigin + cellRoot.rotation * offset;
             pos.y = PRISONER_Y_OFFSET;
             rot = cellRoot.rotation;
@@ -103,6 +130,25 @@ public class CellManager : MonoBehaviour
     {
         prisonersInCell.Add(prisoner);
         RefreshCounter();
+        RefreshJailVisual();
+        if (IsFull && !fullNotified)
+        {
+            fullNotified = true;
+            StartCoroutine(OnFirstFull());
+        }
+    }
+
+    private IEnumerator OnFirstFull()
+    {
+        // 업그레이드 존 활성화
+        if (prisonExpandUpgrade != null)
+            prisonExpandUpgrade.SetActive(true);
+
+        // 카메라를 업그레이드 존으로 팬
+        if (cameraFollow != null && prisonExpandUpgrade != null)
+            cameraFollow.PanToAndReturn(prisonExpandUpgrade.transform.position, cameraPanHoldDuration);
+
+        yield return null;
     }
 
     // 업그레이드 시 감옥 확장 → FIFO 순서대로 입소
@@ -110,7 +156,15 @@ public class CellManager : MonoBehaviour
     {
         capacity += additionalSlots;
         RefreshCounter();
+        RefreshJailVisual();
         ProcessOutsideQueue();
+    }
+
+    // 꽉 찼으면 jail2, 아니면 jail1 표시
+    private void RefreshJailVisual()
+    {
+        if (jail1Visual != null) jail1Visual.SetActive(!IsFull);
+        if (jail2Visual != null) jail2Visual.SetActive(IsFull);
     }
 
     private void ProcessOutsideQueue()
@@ -157,8 +211,11 @@ public class CellManager : MonoBehaviour
 
     private void RefreshCounter()
     {
-        if (cellCounterText != null)
-            cellCounterText.text = $"{prisonersInCell.Count}/{capacity}";
+        if (cellCounterText == null) return;
+        cellCounterText.text = $"{prisonersInCell.Count}/{capacity}";
+        cellCounterText.color = (prisonersInCell.Count >= capacity)
+            ? Color.red
+            : Color.white;
     }
 
 #if UNITY_EDITOR
@@ -181,23 +238,40 @@ public class CellManager : MonoBehaviour
         else if (cellRoot != null)
         {
             Vector3 origin = CellGridOrigin;
-            for (int i = 0; i < 20; i++)
+            Quaternion gridRot = Quaternion.Euler(0f, stackGridRotationY, 0f);
+            int totalPreview = 20;
+            int previewCols = stackGridColumns > 0 ? stackGridColumns : 5;
+
+            for (int i = 0; i < totalPreview; i++)
             {
-                int col = i % 5, row = i / 5;
-                Vector3 offset = new Vector3(col * 1.5f, 0f, row * 1.5f);
-                Vector3 pos    = origin + cellRoot.rotation * offset;
+                int col = i % previewCols, row = i / previewCols;
+                Vector3 rawOffset = new Vector3(col * stackGridSpacing, 0f, row * stackGridSpacing);
+                Vector3 offset = cellRoot.rotation * gridRot * rawOffset;
+                Vector3 pos    = origin + offset;
                 pos.y          = PRISONER_Y_OFFSET;
-                float t = (float)row / 3f;
+                float t = (float)row / Mathf.Max(1, totalPreview / previewCols - 1);
                 Gizmos.color = Color.Lerp(new Color(0.2f, 1f, 0.3f, 0.8f),
                                           new Color(0.1f, 0.4f, 0.2f, 0.5f), t);
                 Gizmos.DrawWireCube(pos, new Vector3(0.9f, 1.8f, 0.9f));
+                UnityEditor.Handles.Label(pos + Vector3.up * 1.1f, $"{i}");
             }
+
+            // 격자 방향 화살표 (컬럼 방향=녹색, 행 방향=청록)
+            Vector3 colDir = cellRoot.rotation * gridRot * Vector3.right;
+            Vector3 rowDir = cellRoot.rotation * gridRot * Vector3.forward;
+            Gizmos.color = new Color(0f, 1f, 0.2f, 0.9f);
+            Gizmos.DrawRay(origin, colDir * stackGridSpacing * 1.5f);
+            UnityEditor.Handles.Label(origin + colDir * stackGridSpacing * 1.6f, "→ Col");
+            Gizmos.color = new Color(0f, 0.9f, 1f, 0.9f);
+            Gizmos.DrawRay(origin, rowDir * stackGridSpacing * 1.5f);
+            UnityEditor.Handles.Label(origin + rowDir * stackGridSpacing * 1.6f, "→ Row");
+
             // MarkerVis 위치 표시
             var mv = cellRoot.Find("MarkerVis");
             Gizmos.color = Color.green;
             Vector3 markPos = mv != null ? mv.position : cellRoot.position;
             Gizmos.DrawSphere(markPos, 0.35f);
-            UnityEditor.Handles.Label(markPos + Vector3.up, "CellGrid Origin (MV)");
+            UnityEditor.Handles.Label(markPos + Vector3.up, $"CellGrid Origin (MV)  rotY={stackGridRotationY}°");
         }
 
         // ── 외부 대기줄 미리보기 ──────────────────────────────────

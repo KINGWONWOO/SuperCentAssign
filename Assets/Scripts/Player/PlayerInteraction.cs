@@ -114,7 +114,9 @@ public class PlayerInteraction : MonoBehaviour
                     float fwdOffset = toolManager != null ? toolManager.GetMiningForwardOffset() : 0f;
                     float spacing = GameManager.Instance?.Settings.gridSpacingZ ?? 1.2f;
                     Vector3 minePos = transform.position + transform.forward * (spacing + fwdOffset);
-                    currentMiningGrid.MineAt(minePos, width, stackManager);
+                    int rearDepth = (currentLevel == ToolLevel.DrillCar)
+                        ? (GameManager.Instance?.Settings.bulldozerRearDepth ?? 2) : 0;
+                    currentMiningGrid.MineAt(minePos, width, stackManager, rearDepth);
                 }
             }
         }

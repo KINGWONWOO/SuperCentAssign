@@ -1,8 +1,10 @@
 using UnityEngine;
 using System.Collections;
 
-// 자동 채굴 NPC. 지정된 열(X)을 고정하고 20개 행(Z)을 왕복하며 채굴.
-// 플레이어와 동일한 MiningAnimNotifier 기반 채굴 타이밍 사용.
+// 자동 채굴 NPC.
+// 그리드 밖(업그레이드존 근처)에서 스폰 → 그리드 row0부터 끝까지 왕복하며 채굴.
+// 각 행에 도달 후 돌이 있으면 채굴, 없으면 다음 행으로 이동.
+// 채굴 속도는 플레이어의 2배 (animator.speed = 2f).
 public class WorkerNPC : MonoBehaviour
 {
     private MiningGrid miningGrid;
@@ -18,8 +20,9 @@ public class WorkerNPC : MonoBehaviour
     private bool impactFired = false;
     private RockNode pendingNode = null;
 
-    private static readonly int SpeedHash    = Animator.StringToHash("Speed");
-    private static readonly int IsMiningHash = Animator.StringToHash("IsMining");
+    private static readonly int SpeedHash      = Animator.StringToHash("Speed");
+    private static readonly int IsMiningHash   = Animator.StringToHash("IsMining");
+    private static readonly int MiningStateHash = Animator.StringToHash("Mining");
 
     [Header("곡괭이 손 부착 오프셋")]
     [SerializeField] private Transform pickaxeModel;
@@ -27,7 +30,7 @@ public class WorkerNPC : MonoBehaviour
     [SerializeField] private Vector3 pickaxeLocalRot   = new Vector3(0f, 0f, 0f);
     [SerializeField] private Vector3 pickaxeLocalScale = new Vector3(1f, 1f, 1f);
 
-    public void Initialize(MiningGrid grid, int col)
+    public void Initialize(MiningGrid grid, int col, Vector3 spawnOutsidePos)
     {
         miningGrid  = grid;
         assignedCol = col;
@@ -48,22 +51,35 @@ public class WorkerNPC : MonoBehaviour
         GameSettings s = GameManager.Instance.Settings;
         moveSpeed = s.workerMoveSpeed;
 
-        // Animator + MiningAnimNotifier 설정
+        // Animator (2배 속도) + MiningAnimNotifier
         animator = GetComponentInChildren<Animator>(true);
         if (animator != null)
         {
+            animator.speed = 1f;
             miningNotifier = animator.gameObject.GetComponent<MiningAnimNotifier>();
             if (miningNotifier == null)
                 miningNotifier = animator.gameObject.AddComponent<MiningAnimNotifier>();
             miningNotifier.OnMiningImpact += OnMiningImpact;
         }
 
-        // 곡괭이 손 부착
+        // 곡괭이 손 부착 (뼈가 없으면 무시)
         rightHandBone = FindBoneRecursive(transform, "mixamorig:RightHand");
         AttachPickaxeToHand();
 
-        transform.position = miningGrid.GetNodeWorldPos(assignedCol, 0);
+        // 그리드 밖 위치에서 시작
+        transform.position = spawnOutsidePos;
+        currentRow = 0;
+
         StartCoroutine(WorkRoutine());
+    }
+
+    // 이전 호환용 (spawnPos 없이 호출 시 row0 앞에서 시작)
+    public void Initialize(MiningGrid grid, int col)
+    {
+        Vector3 row0 = grid.GetNodeWorldPos(col, 0);
+        // 그리드 앞 방향의 반대(입구쪽)로 2칸
+        Vector3 before = row0 - grid.transform.forward * (GameManager.Instance.Settings.gridSpacingZ * 2f);
+        Initialize(grid, col, before);
     }
 
     private IEnumerator WorkRoutine()
@@ -75,42 +91,74 @@ public class WorkerNPC : MonoBehaviour
 
             if (node != null && node.IsActive)
             {
-                // 돌 앞에 도달 → 채굴 애니메이션 시작
-                pendingNode = node;
+                // 돌에서 1.8칸 앞에 정지 (대형 캐릭터 스케일 고려)
+                Vector3 rockPos = miningGrid.GetNodeWorldPos(assignedCol, currentRow);
+                float spacing = GameManager.Instance?.Settings.gridSpacingZ ?? 1.2f;
+                Vector3 approachDir = movingForward
+                    ? miningGrid.transform.forward
+                    : -miningGrid.transform.forward;
+                Vector3 stopPos = rockPos - approachDir * (spacing * 1.8f);
+
+                // stopPos로 이동 — 이동 중 Speed=1 유지
+                if (Vector3.Distance(transform.position, stopPos) > 0.15f)
+                {
+                    animator?.SetFloat(SpeedHash, 1f);
+                    while (Vector3.Distance(transform.position, stopPos) > 0.15f)
+                    {
+                        transform.position = Vector3.MoveTowards(
+                            transform.position, stopPos, moveSpeed * Time.deltaTime);
+                        FaceTarget(stopPos);
+                        yield return null;
+                    }
+                    transform.position = stopPos;
+                }
                 animator?.SetFloat(SpeedHash, 0f);
+
+                // 돌 방향으로 회전 후 채굴
+                FaceTarget(rockPos);
+
+                pendingNode = node;
                 animator?.SetBool(IsMiningHash, true);
                 SetPickaxeVisible(true);
 
-                // MiningAnimNotifier 이벤트로 채굴 (impactFired 플래그로 한 번만)
+                // Mining 상태에 실제 진입할 때까지 대기
                 impactFired = false;
-                yield return new WaitUntil(() => impactFired);
+                float mineTimer = 0f;
+                const float mineTimeout = 4f;
+                yield return new WaitUntil(() =>
+                    animator == null ||
+                    (!animator.IsInTransition(0) &&
+                     animator.GetCurrentAnimatorStateInfo(0).shortNameHash == MiningStateHash));
+
+                // Mining 상태에서 전체 1회 재생 대기
+                while (mineTimer < mineTimeout)
+                {
+                    mineTimer += Time.deltaTime;
+                    if (animator != null && !animator.IsInTransition(0) &&
+                        animator.GetCurrentAnimatorStateInfo(0).shortNameHash == MiningStateHash)
+                    {
+                        float norm = animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+                        if (!impactFired && norm >= 0.69f)
+                            OnMiningImpact();
+                        if (norm >= 0.97f) break;
+                    }
+                    yield return null;
+                }
+                if (!impactFired) OnMiningImpact();
+
                 animator?.SetBool(IsMiningHash, false);
                 SetPickaxeVisible(false);
                 pendingNode = null;
-
-                // 채굴 후 잠깐 대기 (애니메이션 완료)
-                yield return new WaitForSeconds(0.3f);
+                yield return new WaitForSeconds(0.1f);
             }
             else
             {
-                // 돌 없음 → 이동 (다음 행)
+                // 돌 없음 → 이동 없이 row 카운터만 증가 (이동은 다음 돌의 stopPos로 자연스럽게)
                 int nextRow = movingForward ? currentRow + 1 : currentRow - 1;
-                if (nextRow >= totalRows) { movingForward = false; nextRow = currentRow - 1; }
-                if (nextRow < 0)         { movingForward = true;  nextRow = currentRow + 1; }
-
-                Vector3 targetPos = miningGrid.GetNodeWorldPos(assignedCol, nextRow);
-                animator?.SetFloat(SpeedHash, 1f);
-
-                while (Vector3.Distance(transform.position, targetPos) > 0.05f)
-                {
-                    transform.position = Vector3.MoveTowards(
-                        transform.position, targetPos, moveSpeed * Time.deltaTime);
-                    FaceTarget(targetPos);
-                    yield return null;
-                }
-                transform.position = targetPos;
-                animator?.SetFloat(SpeedHash, 0f);
+                if (nextRow >= totalRows)      { movingForward = false; nextRow = currentRow - 1; }
+                else if (nextRow < 0)          { movingForward = true;  nextRow = currentRow + 1; }
                 currentRow = nextRow;
+                yield return null;
             }
         }
     }
