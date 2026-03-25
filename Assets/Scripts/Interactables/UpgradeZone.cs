@@ -129,6 +129,7 @@ public class UpgradeZone : MonoBehaviour
     private void ExecuteUpgrade(PlayerToolManager toolManager)
     {
         upgradeCompleted = true;
+        SoundManager.Instance?.PlayUpgrade();
 
         switch (upgradeType)
         {

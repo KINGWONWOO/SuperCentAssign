@@ -3,6 +3,7 @@ using System.Collections;
 
 // NavMesh 없이 Vector3.MoveTowards로 이동하는 수감자 AI.
 // 경로: SpawnPoint → WaitPosition → DeskPosition → PrisonEntrance(MarkerVis) → Cell (또는 외부 대기)
+// 애니메이션: 이동 중 pb_walk, Desk 대기 중 pb_idle (Speed 파라미터로 제어)
 public class PrisonerAI : MonoBehaviour
 {
     [SerializeField] private SpeechBubble speechBubble;
@@ -22,6 +23,8 @@ public class PrisonerAI : MonoBehaviour
     private float moveSpeed = 3.5f;
 
     private Coroutine activeMovement;
+    private Animator animator;
+    private static readonly int SpeedHash = Animator.StringToHash("Speed");
 
     void Awake()
     {
@@ -31,6 +34,7 @@ public class PrisonerAI : MonoBehaviour
             handcuffsNeeded = s.handcuffsPerPrisoner;
             moveSpeed = s.prisonerMoveSpeed;
         }
+        animator = GetComponentInChildren<Animator>(true);
     }
 
     // PrisonerSpawner가 호출 — 모든 목적지를 Vector3으로 직접 전달
@@ -155,6 +159,7 @@ public class PrisonerAI : MonoBehaviour
 
     private IEnumerator WalkTo(Vector3 destination, System.Action onArrived)
     {
+        animator?.SetFloat(SpeedHash, 1f);
         while (Vector3.Distance(transform.position, destination) > 0.25f)
         {
             transform.position = Vector3.MoveTowards(
@@ -163,6 +168,7 @@ public class PrisonerAI : MonoBehaviour
             yield return null;
         }
         transform.position = destination;
+        animator?.SetFloat(SpeedHash, 0f);
         onArrived?.Invoke();
     }
 

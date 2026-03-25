@@ -33,6 +33,7 @@ public class RockNode : MonoBehaviour
         IsActive = false;
         SetVisible(false);
         PlayMineEffects();
+        SoundManager.Instance?.PlayMining();
         StartCoroutine(RespawnRoutine());
 
         // 스택 가득 찼어도 AddOre 호출 — 내부에서 false 반환하지만 돌은 이미 사라짐

@@ -55,6 +55,7 @@ public class PlayerStackManager : MonoBehaviour
         stackedItems.Add(si);
         StartCoroutine(LerpToPosition(obj.transform, stackedItems.Count - 1));
         SetMaxIndicator(IsOreFull);
+        SoundManager.Instance?.PlayStack();
         return true;
     }
 
@@ -69,6 +70,7 @@ public class PlayerStackManager : MonoBehaviour
         obj.transform.SetParent(stackPoint);
         stackedItems.Add(si);
         StartCoroutine(LerpToPosition(obj.transform, stackedItems.Count - 1));
+        SoundManager.Instance?.PlayStack();
         return true;
     }
 
@@ -78,6 +80,7 @@ public class PlayerStackManager : MonoBehaviour
         existingItem.transform.SetParent(stackPoint);
         stackedItems.Add(existingItem);
         StartCoroutine(LerpToPosition(existingItem.transform, stackedItems.Count - 1));
+        SoundManager.Instance?.PlayStack();
         return true;
     }
 
